@@ -1,0 +1,147 @@
+<section class="view hidden" id="notices-view">
+<div class="flex flex-wrap items-center justify-between mb-6 gap-3 no-print">
+<h2 class="text-2xl font-bold text-gray-800 dark:text-white">الإشعارات والإنذارات</h2>
+<p class="text-sm text-gray-500 dark:text-gray-400">إنشاء خطابات رسمية موجهة للمستأجرين وطباعتها</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- إعدادات الخطاب -->
+<div class="bg-white p-6 rounded-2xl no-print">
+<h3 class="font-bold mb-4 text-gray-700 dark:text-gray-200">إعداد الخطاب</h3>
+<div class="space-y-3">
+<div>
+<label class="block text-sm font-semibold mb-1">المستأجر</label>
+<select class="w-full border p-2 rounded-lg" id="notice-tenant-select" onchange="onNoticeTenantChange()">
+<option value="">اختر مستأجر...</option>
+</select>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">الوحدة</label>
+<select class="w-full border p-2 rounded-lg" disabled="" id="notice-unit-select">
+<option value="">اختر وحدة...</option>
+</select>
+<p class="text-[11px] text-gray-400 mt-1">سيتم تفعيل اختيار الوحدة تلقائياً بعد اختيار المستأجر.</p>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">نوع الخطاب</label>
+<select class="w-full border p-2 rounded-lg" id="notice-template-select" onchange="resetNoticePreview()">
+<option value="blank">خطاب رسمي فارغ (يُكتب حسب رغبة المسؤول)</option>
+<option value="eviction">إخطار بعدم التجديد وإخلاء العين + براءة ذمة كهرباء/مياه</option>
+<option value="increase5">إشعار زيادة قيمة العقد 5%</option>
+<option value="arrearsRenew">إنذار دفع متأخرات إيجارية + تجديد عقد</option>
+<option value="arrearsCheque">إنذار دفع متأخرات (شيك راجع/دفعة أولى)</option>
+</select>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<div>
+<label class="block text-sm font-semibold mb-1">التاريخ</label>
+<input class="w-full border p-2 rounded-lg dark:bg-gray-800 dark:text-white" id="notice-date" onchange="resetNoticePreview()" type="date"/>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">رقم الخطاب</label>
+<input class="w-full border p-2 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white" id="notice-ref" oninput="resetNoticePreview()" placeholder="NT-00001"/>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-1">
+<input class="h-4 w-4" id="notice-bilingual" onchange="resetNoticePreview()" type="checkbox"/>
+<label class="text-sm" for="notice-bilingual">إظهار نسخة English (عمودين)</label>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
+<label class="flex items-center gap-2 text-sm">
+<input checked="" class="h-4 w-4" id="notice-show-signature" onchange="persistNoticeUiPrefs(); resetNoticePreview();" type="checkbox"/>
+<span>إظهار التوقيع وبيانات المرسل</span>
+</label>
+<label class="flex items-center gap-2 text-sm">
+<input checked="" class="h-4 w-4" id="notice-show-seal" onchange="persistNoticeUiPrefs(); resetNoticePreview();" type="checkbox"/>
+<span>إظهار مربع الختم (اختياري)</span>
+</label>
+<label class="flex items-center gap-2 text-sm sm:col-span-2">
+<input checked="" class="h-4 w-4" id="notice-show-attachments" onchange="persistNoticeUiPrefs(); resetNoticePreview();" type="checkbox"/>
+<span>إظهار المرفقات المطلوبة</span>
+</label>
+<div class="sm:col-span-2">
+<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">مرفقات إضافية (سطر لكل مرفق)</label>
+<textarea class="w-full border p-2 rounded-lg" id="notice-attachments-custom" oninput="persistNoticeUiPrefs(); resetNoticePreview();" placeholder="مثال: صورة الهوية
+مثال: كشف حساب" rows="2"></textarea>
+</div>
+</div>
+<div class="hidden p-3 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3" id="notice-extra-options">
+<!-- خيارات زيادة 5% -->
+<div id="notice-extra-increase5">
+<div class="flex items-center gap-2">
+<input checked="" class="h-4 w-4" id="notice-no-reply-accept" onchange="resetNoticePreview()" type="checkbox"/>
+<label class="text-sm" for="notice-no-reply-accept">اعتبار عدم الرد خلال 7 أيام موافقة على الزيادة</label>
+</div>
+</div>
+<!-- خيارات إنذارات المتأخرات -->
+<div class="hidden space-y-3" id="notice-extra-arrears">
+<div class="p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
+<div class="flex items-start gap-2">
+<input checked="" class="h-4 w-4 mt-1" id="notice-arrears-autofill" type="checkbox"/>
+<div class="flex-1">
+<label class="text-sm font-semibold" for="notice-arrears-autofill">تعبئة تلقائية من النظام</label>
+<div class="text-xs text-gray-500 dark:text-gray-400 mt-1">يحسب المتأخرات من الدفعات/الشيكات المسجلة لهذا المستأجر وهذه الوحدة. يمكنك تعديل الأرقام يدويًا قبل الطباعة.</div>
+<button class="mt-2 px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-100 dark:hover:bg-gray-700" onclick="autofillNoticeArrears(true)" type="button">🔄 تحديث تلقائي</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+<div>
+<label class="block text-sm font-semibold mb-1">قيمة العقد</label>
+<input class="w-full border p-2 rounded-lg dark:bg-gray-800 dark:text-white" id="notice-contract-value" oninput="resetNoticePreview()" placeholder="مثال: 47500" type="number"/>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">المتأخرات / المتبقي</label>
+<input class="w-full border p-2 rounded-lg dark:bg-gray-800 dark:text-white" id="notice-arrears-amount" oninput="resetNoticePreview()" placeholder="مثال: 14000" type="number"/>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">تفاصيل المتأخرات (اختياري)</label>
+<input class="w-full border p-2 rounded-lg dark:bg-gray-800 dark:text-white" id="notice-arrears-details" oninput="resetNoticePreview()" placeholder="مثال: الدفعة الأولى (شيك راجع لعدم كفاية الرصيد)"/>
+</div>
+</div>
+</div>
+<div>
+<label class="block text-sm font-semibold mb-1">عنوان/موضوع الخطاب (اختياري)</label>
+<input class="w-full border p-2 rounded-lg" id="notice-subject" oninput="resetNoticePreview()" placeholder="مثال: إنذار رسمي..."/>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2">
+<button class="btn-ui btn-filter" id="notice-preview-btn" type="button">إنشاء معاينة</button>
+<button class="bg-slate-600 hover:bg-slate-700 text-white py-2 rounded-lg shadow disabled:opacity-50" disabled="" id="notice-print-draft-btn" type="button">🖨️ طباعة تجريبية</button>
+<button class="btn-ui btn-success" disabled="" id="notice-print-final-btn" type="button">✅ اعتماد وطباعة</button>
+</div>
+<div class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+            ملاحظة: في هذه الخطوة تم إنشاء الصفحة وربطها بالنظام. <b>نصوص القوالب الرسمية وتنسيق الطباعة</b> سيتم تفعيلها في الخطوة التالية حسب نموذج الخطاب المرفق.
+          </div>
+</div>
+</div>
+<!-- معاينة -->
+<div class="bg-white p-6 rounded-2xl lg:col-span-2">
+<div class="flex items-center justify-between mb-3 no-print">
+<h3 class="font-bold text-gray-700 dark:text-gray-200">معاينة الخطاب</h3>
+<span class="text-xs text-gray-500 dark:text-gray-400" id="notice-preview-status"></span>
+</div>
+<div class="border rounded-2xl p-6 min-h-[460px] bg-gray-50 dark:bg-gray-900/20" id="notice-preview">
+<div class="text-center text-gray-500 dark:text-gray-400">
+            اختر المستأجر ونوع الخطاب ثم اضغط <b>إنشاء معاينة</b>.
+          </div>
+</div>
+</div>
+</div>
+<div class="mt-4 no-print">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-2">
+<h3 class="font-bold text-gray-700 dark:text-gray-200">سجل الإنذارات المعتمدة</h3>
+<div class="flex items-center gap-2">
+<input class="ui-field" id="notice-log-search" placeholder="بحث بالاسم أو رقم الخطاب أو الوحدة..." type="text"/>
+<button class="text-sm bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-3 py-2 rounded-xl" id="notice-undo-last-btn" type="button">
+              ↩️ تراجع عن آخر اعتماد
+            </button>
+</div>
+</div>
+<div class="border rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/20 text-sm text-gray-700 dark:text-gray-200" id="notice-log">
+<div class="text-gray-500 dark:text-gray-400">لا يوجد إنذارات معتمدة بعد.</div>
+</div>
+<p class="mt-2 text-[11px] text-gray-500 dark:text-gray-400">
+          ملاحظة: <b>الطباعة التجريبية</b> لا تستهلك رقم خطاب ولا تُسجَّل في السجل. أما <b>اعتماد وطباعة</b> فيتم حفظها في السجل مع الرقم.
+        </p>
+</div>
+</section>

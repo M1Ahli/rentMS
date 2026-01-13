@@ -1,0 +1,29 @@
+<section class="view hidden" id="payments-view">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold text-gray-800 dark:text-white">سجل الدفعات المالية</h2>
+<button class="btn-ui btn-success" onclick="openPaymentModal()">تسجيل دفعة جديدة</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<div class="bg-white p-4 rounded shadow border-t-4 border-emerald-500 text-center">
+<p class="text-xs text-gray-500 dark:text-gray-400">إجمالي الدفعات</p>
+<p class="font-bold text-xl text-emerald-700 dark:text-emerald-400" id="payments-total">0</p>
+</div>
+</div>
+<div class="table-wrap bg-white shadow-sm">
+<table class="ui-table min-w-full text-right">
+<thead>
+<tr>
+<th>التاريخ</th>
+<th>المستأجر / الوحدة</th>
+<th>النوع</th>
+<th>المبلغ</th>
+<th>المستحق / المتبقي</th>
+<th>الحالة</th>
+<th>السند</th>
+</tr>
+</thead>
+<tbody id="payments-table-body"></tbody>
+</table>
+</div>
+<div class="pager-wrap" id="payments-pager"></div>
+</section>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="utf-8"/>
+<title>نظام إدارة العقارات المتكامل</title>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dark: {
+              bg: '#111827',
+              surface: '#1f2937',
+              border: '#374151',
+              text: '#f3f4f6',
+              muted: '#9ca3af',
+              input: '#111827'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+<link href="./assets/css/app.css" rel="stylesheet"/>
+</head>
+<body class="p-4 md:p-6 max-w-[1600px] mx-auto transition-colors duration-300"><div id="nav-slot"></div><div id="modals-slot"></div>
+<div id="toast-stack" dir="rtl" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2 w-[min(420px,calc(100vw-2rem))] pointer-events-none"></div><script src="./assets/js/bootstrap.js"></script></body>
+</html>

@@ -1,0 +1,96 @@
+(async function(){
+  async function loadText(url){
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) throw new Error(`Failed to load ${url}: ${res.status}`);
+    return await res.text();
+  }
+
+  function insertBeforeSlot(slot, html){
+    slot.insertAdjacentHTML('beforebegin', html);
+  }
+
+  async function main(){
+    const navSlot = document.getElementById('nav-slot');
+    const modalsSlot = document.getElementById('modals-slot');
+    if(!navSlot || !modalsSlot){
+      console.error('Missing nav-slot/modals-slot');
+      return;
+    }
+
+    // 1) NAV (must become direct child of body)
+    const navHTML = await loadText('./components/nav.html');
+    insertBeforeSlot(navSlot, navHTML);
+    navSlot.remove();
+
+    // 2) Views (insert before modals slot so sections remain in DOM like before)
+    const pages = ["dashboard.html", "properties.html", "leases.html", "tenants.html", "cheques.html", "payments.html", "expenses.html", "salaries.html", "receipts-history.html", "receipt.html", "reports.html", "notices.html", "settings.html"];
+    for(const p of pages){
+      const viewHTML = await loadText('./pages/' + p);
+      insertBeforeSlot(modalsSlot, viewHTML);
+    }
+
+    // 3) Modals
+    const modalsHTML = await loadText('./components/modals.html');
+    insertBeforeSlot(modalsSlot, modalsHTML);
+    modalsSlot.remove();
+
+    // 4) Load main app JS AFTER markup exists
+
+    // 4a) Unified UI enhancer (search/sort/buttons)
+    await new Promise((resolve)=>{
+      const s = document.createElement('script');
+      s.src = './assets/js/ui_unified.js';
+      s.onload = resolve;
+      s.onerror = resolve;
+      document.body.appendChild(s);
+    });
+
+    await new Promise((resolve, reject)=>{
+      const s = document.createElement('script');
+      s.src = './assets/js/app.js';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('Failed to load app.js'));
+      document.body.appendChild(s);
+    });
+
+    // Notify enhancers that dynamic HTML is ready
+    document.dispatchEvent(new CustomEvent('ui:components-loaded'));
+
+
+    // 5) Optional router (hash) support
+    await new Promise((resolve)=>{
+      const s = document.createElement('script');
+      s.src = './assets/js/router.js';
+      s.onload = resolve;
+      s.onerror = resolve; // optional
+      document.body.appendChild(s);
+    });
+
+    // Notify enhancers that dynamic HTML is ready
+    document.dispatchEvent(new CustomEvent('ui:components-loaded'));
+
+
+    // 6) Optional dev tools (diagnostics). Will be skipped silently if missing.
+    await new Promise((resolve)=>{
+      const s = document.createElement('script');
+      s.src = './assets/js/dev-tools.js';
+      s.onload = resolve;
+      s.onerror = resolve;
+      document.body.appendChild(s);
+    });
+
+    // Notify enhancers that dynamic HTML is ready
+    document.dispatchEvent(new CustomEvent('ui:components-loaded'));
+
+  }
+
+  // If running from file://, fetch will often be blocked.
+  if(location.protocol === 'file:'){
+    console.warn('This project uses fetch() to load components. Please run it from a local web server or your NAS web server (http/https).');
+  }
+
+  try{ await main(); }catch(err){
+    console.error(err);
+    alert('تعذر تحميل مكونات المشروع. تأكد من تشغيله عبر سيرفر (http/https) وليس file://');
+  }
+})();

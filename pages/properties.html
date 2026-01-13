@@ -1,0 +1,99 @@
+<section class="view hidden" id="properties-view">
+<div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+<h2 class="text-2xl font-bold text-gray-800 dark:text-white">العقارات والوحدات</h2>
+<div class="prop-toolbar" aria-label="أدوات العقارات">
+
+  <div class="prop-toolbar-row prop-toolbar-row1" aria-label="بحث وإجراءات">
+    <button class="btn-ui btn-success" onclick="openPropertyModal()"><span>+</span> إضافة عقار</button>
+
+    <div class="ui-control prop-expand-group" aria-label="توسيع/طي العقارات">
+      <button class="btn-ui btn-ui-sm" onclick="expandAllProperties()" title="توسيع الكل">🔽 توسيع</button>
+      <span class="ui-ctl-divider" aria-hidden="true"></span>
+      <button class="btn-ui btn-ui-sm" onclick="collapseAllProperties()" title="طي الكل">◀️ طي</button>
+    </div>
+
+    <div class="ui-control ui-search-wrap prop-search-wrap" aria-label="بحث العقارات والوحدات">
+      <span aria-hidden="true" class="ui-search-icon keep-icon">🔍</span>
+      <input class="ui-field prop-search-input" id="prop-search" oninput="renderPropertiesDebounced()" placeholder="بحث سريع..." type="text"/>
+    </div>
+
+    <button class="btn-ui btn-filter" id="prop-filters-toggle" onclick="togglePropertiesUnitFilters()">🧰 فلاتر الوحدات</button>
+  </div>
+
+  <div class="prop-toolbar-row prop-toolbar-row2" aria-label="الفرز">
+    <div class="ui-control prop-sort-pill" aria-label="فرز العقارات">
+      <span class="ui-label">فرز العقارات</span>
+      <select class="ui-field ui-select" id="prop-sort-by" onchange="onPropSortChanged()">
+      <option value="name">الاسم</option>
+      <option value="units">عدد الوحدات</option>
+      <option value="location">الموقع</option>
+      <option value="id">المعرف</option>
+    </select>
+      <button class="btn-ui btn-icon" data-dir="asc" id="prop-sort-dir" onclick="togglePropSortDir()" title="عكس ترتيب فرز العقارات">⬆️</button>
+    </div>
+
+    <div class="ui-control unit-sort-pill" aria-label="فرز الوحدات">
+      <span class="ui-label">فرز الوحدات</span>
+      <select class="ui-field ui-select" id="unit-sort-by" onchange="onUnitSortChanged()">
+      <option value="unitName">اسم الوحدة</option>
+      <option value="unitId">رقم الوحدة (UNT)</option>
+      <option value="status">الحالة</option>
+      <option value="tenant">المستأجر</option>
+      <option value="rent">القيمة</option>
+    </select>
+      <button class="btn-ui btn-icon" data-dir="asc" id="unit-sort-dir" onclick="toggleUnitSortDir()" title="عكس ترتيب فرز الوحدات">⬆️</button>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="hidden mb-4 ui-controls-bar ui-advbar" id="prop-filters-panel">
+  <div class="ui-control ui-stack">
+    <label class="ui-label" for="unit-status-filter">حالة الوحدة</label>
+    <select class="ui-field ui-select" id="unit-status-filter">
+      <option value="">الكل</option>
+      <option value="شاغرة">شاغرة</option>
+      <option value="مؤجرة">مؤجرة</option>
+    </select>
+  </div>
+
+  <div class="ui-control ui-stack">
+    <label class="ui-label" for="unit-end-from">نهاية العقد (من)</label>
+    <input class="ui-field" id="unit-end-from" type="date"/>
+  </div>
+
+  <div class="ui-control ui-stack">
+    <label class="ui-label" for="unit-end-to">نهاية العقد (إلى)</label>
+    <input class="ui-field" id="unit-end-to" type="date"/>
+  </div>
+
+  <button class="btn-ui btn-reset" id="prop-filters-reset" onclick="resetPropertiesUnitFilters()">إعادة ضبط</button>
+  <div class="ui-advbar-meta" id="prop-filters-hint"></div>
+</div>
+<!-- Quick Stats (Units) -->
+<div class="mb-4 grid grid-cols-2 md:grid-cols-3 gap-3" id="prop-units-stats">
+<div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="text-xs text-gray-500 dark:text-gray-400">شاغرة</div>
+<span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+</div>
+<div class="mt-2 text-2xl font-extrabold text-gray-800 dark:text-white" id="stat-vacant">0</div>
+</div>
+<div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="text-xs text-gray-500 dark:text-gray-400">مؤجرة</div>
+<span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+</div>
+<div class="mt-2 text-2xl font-extrabold text-gray-800 dark:text-white" id="stat-rented">0</div>
+</div>
+<div class="bg-white dark:bg-dark-surface border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm">
+<div class="flex items-center justify-between">
+<div class="text-xs text-gray-500 dark:text-gray-400">المعروضة</div>
+<span class="text-[10px] text-gray-400 dark:text-gray-500 font-mono"><span id="stat-shown">0</span>/<span id="stat-total">0</span></span>
+</div>
+<div class="mt-2 text-2xl font-extrabold text-gray-800 dark:text-white"><span id="stat-shown-big">0</span></div>
+</div>
+</div>
+<div class="space-y-6" id="properties-container"></div>
+</section>

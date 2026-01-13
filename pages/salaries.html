@@ -1,0 +1,83 @@
+<section class="view hidden" id="salaries-view">
+<h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">رواتب الحارس والعمال</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="md:col-span-1">
+<form class="bg-white dark:bg-dark-surface p-6 rounded-xl shadow-sm space-y-4 sticky top-4" id="salary-form">
+<h3 class="font-bold text-gray-700 dark:text-gray-200 border-b dark:border-dark-border pb-2">تسجيل راتب جديد</h3>
+<div>
+<label class="text-xs text-gray-500 dark:text-gray-400">اسم الموظف</label>
+<input class="w-full border p-2 rounded" id="sal-name" placeholder="مثال: محمد علي" required=""/>
+</div>
+<div>
+<label class="text-xs text-gray-500 dark:text-gray-400">الوظيفة</label>
+<select class="w-full border p-2 rounded" id="sal-role">
+<option value="حارس">حارس</option>
+<option value="عامل نظافة">عامل نظافة</option>
+<option value="صيانة">فني صيانة</option>
+<option value="إداري">إداري</option>
+<option value="آخر">آخر</option>
+</select>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div>
+<label class="text-xs text-gray-500 dark:text-gray-400">المبلغ</label>
+<input class="w-full border p-2 rounded" id="sal-amount" required="" type="number"/>
+</div>
+<div>
+<label class="text-xs text-gray-500 dark:text-gray-400">التاريخ</label>
+<input class="w-full border p-2 rounded" id="sal-date" required="" type="date"/>
+</div>
+</div>
+<div class="bg-gray-50 dark:bg-gray-800 p-3 rounded border dark:border-gray-700">
+<label class="text-xs font-bold text-gray-700 dark:text-gray-300 block mb-2">راتب شهر:</label>
+<div class="flex gap-2">
+<select class="w-2/3 border p-2 rounded text-sm" id="sal-month">
+<option value="يناير">يناير</option>
+<option value="فبراير">فبراير</option>
+<option value="مارس">مارس</option>
+<option value="أبريل">أبريل</option>
+<option value="مايو">مايو</option>
+<option value="يونيو">يونيو</option>
+<option value="يوليو">يوليو</option>
+<option value="أغسطس">أغسطس</option>
+<option value="سبتمبر">سبتمبر</option>
+<option value="أكتوبر">أكتوبر</option>
+<option value="نوفمبر">نوفمبر</option>
+<option value="ديسمبر">ديسمبر</option>
+</select>
+<select class="w-1/3 border p-2 rounded text-sm" id="sal-year"></select>
+</div>
+</div>
+<button class="btn-ui btn-filter">تسجيل الراتب</button>
+</form>
+</div>
+<div class="md:col-span-2 space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white dark:bg-dark-surface p-4 rounded-xl shadow border-r-4 border-indigo-500">
+<p class="text-xs text-gray-500 dark:text-gray-400">إجمالي الرواتب المدفوعة</p>
+<p class="text-xl font-bold text-gray-800 dark:text-white" id="total-salaries">0 AED</p>
+</div>
+<div class="bg-white dark:bg-dark-surface p-4 rounded-xl shadow border-r-4 border-teal-500">
+<p class="text-xs text-gray-500 dark:text-gray-400">عدد العمليات</p>
+<p class="text-xl font-bold text-gray-800 dark:text-white" id="count-salaries">0</p>
+</div>
+</div>
+<div class="table-wrap bg-white dark:bg-dark-surface shadow-sm rounded-xl">
+<table class="ui-table min-w-full text-right">
+<thead class="bg-gray-50 dark:bg-dark-bg">
+<tr>
+<th class="py-3 px-4">التاريخ</th>
+<th class="py-3 px-4">الموظف</th>
+<th class="py-3 px-4">المبلغ</th>
+<th class="py-3 px-4">البيان</th>
+<th class="py-3 px-4 text-center">السند</th>
+<th class="py-3 px-4 text-center">حذف</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="salaries-table-body"></tbody>
+</table>
+</div>
+<div class="pager-wrap" id="salaries-pager"></div>
+</div>
+</div>
+</section>

@@ -1,0 +1,38 @@
+<section class="view hidden" id="tenants-view">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold text-gray-800 dark:text-white">سجل المستأجرين</h2>
+</div>
+<div class="table-wrap mb-4">
+<div class="ui-controls-bar" data-ui-controls="tenants">
+<div class="ui-control ui-search ui-search-wrap">
+<span aria-hidden="true">🔍</span>
+<input class="ui-field w-full" id="tenants-search" oninput="renderTenantsDebounced()" placeholder="بحث عن مستأجر بالاسم، الهاتف أو البريد..." type="text"/>
+</div>
+<div class="ui-control ui-sort">
+<select class="ui-field ui-select w-full" id="tenants-sort-by" onchange="onTenantSortChanged()">
+<option value="name">الاسم</option>
+<option value="balance">الرصيد المتبقي</option>
+</select>
+</div>
+<button aria-label="تبديل اتجاه الفرز" class="ui-control ui-dir ui-button" id="tenants-sort-dir" onclick="toggleTenantSortDir()">⬆️</button>
+</div>
+</div>
+<div class="table-wrap bg-white shadow-sm">
+<table class="ui-table min-w-full text-right">
+<thead>
+<tr>
+<th>الاسم</th>
+<th>معلومات الاتصال</th>
+<th>الهوية / الرخصة</th>
+<th>الوحدات</th>
+<th>الإيجار السنوي</th>
+<th>المدفوع</th>
+<th>الرصيد المتبقي</th>
+<th>الإجراءات</th>
+</tr>
+</thead>
+<tbody id="tenants-table-body"></tbody>
+</table>
+</div>
+<div class="pager-wrap" id="tenants-pager"></div>
+</section>

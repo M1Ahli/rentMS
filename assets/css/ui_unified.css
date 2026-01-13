@@ -1,0 +1,232 @@
+
+/* =========================================================
+   Unified UI Kit v1 (Search/Sort/Buttons)
+   هدفه: توحيد شريط البحث/الفرز والأزرار عبر كل الصفحات بدون كسر الوظائف
+   ========================================================= */
+
+:root{
+  --ui-bg: rgba(255,255,255,.72);
+  --ui-bg-2: rgba(255,255,255,.55);
+  --ui-border: rgba(255,255,255,.35);
+  --ui-border-strong: rgba(0,0,0,.10);
+  --ui-text: #111827;
+  --ui-muted: #6b7280;
+  --ui-shadow: 0 10px 30px rgba(0,0,0,.10);
+  --ui-shadow-soft: 0 8px 22px rgba(0,0,0,.08);
+  --ui-radius: 16px;
+  --ui-radius-sm: 12px;
+  --ui-h: 40px;
+}
+
+body.dark-mode{
+  --ui-bg: rgba(17,24,39,.55);
+  --ui-bg-2: rgba(31,41,55,.45);
+  --ui-border: rgba(255,255,255,.10);
+  --ui-border-strong: rgba(255,255,255,.16);
+  --ui-text: #f3f4f6;
+  --ui-muted: #9ca3af;
+  --ui-shadow: 0 14px 34px rgba(0,0,0,.28);
+  --ui-shadow-soft: 0 10px 26px rgba(0,0,0,.22);
+}
+
+/* =============== Bars (containers) =============== */
+.ui-controls-bar,
+.prop-top-controls,
+.lease-unified-row,
+#reports-view .no-print > .flex.flex-col,
+#reports-view .no-print > .flex.flex-col + .mt-3,
+#reports-view .flex.flex-col.sm\:flex-row.gap-2.items-stretch.sm\:items-center.ml-2,
+#reports-view .mt-3.sm\:mt-0.flex.flex-col.sm\:flex-row.gap-2.items-stretch.sm\:items-center.no-print{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  background: var(--ui-bg);
+  border:1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  box-shadow: var(--ui-shadow-soft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Keep bars from stretching oddly */
+.ui-controls-bar{ width:100%; }
+
+/* =============== Pills / Groups =============== */
+.ui-control,
+.prop-expand-group,
+.prop-sort-group,
+.lease-sort-pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  background: var(--ui-bg-2);
+  border:1px solid var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* =============== Fields =============== */
+.ui-field,
+.ui-controls-bar input,
+.ui-controls-bar select,
+.prop-top-controls input,
+.prop-top-controls select,
+.lease-unified-row input,
+.lease-unified-row select{
+  height: var(--ui-h);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  background: rgba(255,255,255,.65);
+  color: var(--ui-text);
+  outline: none;
+  padding: 0 12px;
+}
+
+body.dark-mode .ui-field,
+body.dark-mode .ui-controls-bar input,
+body.dark-mode .ui-controls-bar select,
+body.dark-mode .prop-top-controls input,
+body.dark-mode .prop-top-controls select,
+body.dark-mode .lease-unified-row input,
+body.dark-mode .lease-unified-row select{
+  background: rgba(17,24,39,.55);
+  border-color: rgba(255,255,255,.14);
+  color: var(--ui-text);
+}
+
+.ui-field:focus,
+.ui-controls-bar input:focus,
+.ui-controls-bar select:focus,
+.prop-top-controls input:focus,
+.prop-top-controls select:focus,
+.lease-unified-row input:focus,
+.lease-unified-row select:focus{
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 4px rgba(59,130,246,.15);
+}
+
+/* =============== Search wrappers (icon outside) =============== */
+.ui-search-wrap,
+.prop-search-wrap,
+.lease-search-pill{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:6px 10px;
+  background: var(--ui-bg-2);
+  border:1px solid var(--ui-border);
+  border-radius: var(--ui-radius-sm);
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
+.ui-search-wrap > span,
+.prop-search-ic,
+.lease-search-icon{
+  font-size: 16px;
+  line-height: 1;
+  opacity: .85;
+  user-select:none;
+}
+
+.ui-search-wrap input,
+.prop-search-wrap input,
+.lease-search-pill input{
+  flex: 1 1 auto;
+  min-width: 180px;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 6px !important;
+  height: calc(var(--ui-h) - 12px);
+}
+
+.ui-search-wrap input:focus,
+.prop-search-wrap input:focus,
+.lease-search-pill input:focus{
+  box-shadow: none !important;
+}
+
+/* =============== Buttons =============== */
+.btn-ui,
+.ui-controls-bar button,
+.prop-top-controls button,
+.lease-unified-row button{
+  height: var(--ui-h);
+  border-radius: var(--ui-radius-sm);
+  border: 1px solid var(--ui-border-strong);
+  background: rgba(255,255,255,.75);
+  color: var(--ui-text);
+  padding: 0 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  box-shadow: 0 8px 22px rgba(0,0,0,.08);
+  cursor:pointer;
+  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+}
+
+body.dark-mode .btn-ui,
+body.dark-mode .ui-controls-bar button,
+body.dark-mode .prop-top-controls button,
+body.dark-mode .lease-unified-row button{
+  background: rgba(17,24,39,.60);
+  border-color: rgba(255,255,255,.14);
+  color: var(--ui-text);
+  box-shadow: 0 10px 26px rgba(0,0,0,.22);
+}
+
+.btn-ui:hover,
+.ui-controls-bar button:hover,
+.prop-top-controls button:hover,
+.lease-unified-row button:hover{
+  filter: brightness(1.02);
+  transform: translateY(-1px);
+}
+
+.btn-ui:active,
+.ui-controls-bar button:active,
+.prop-top-controls button:active,
+.lease-unified-row button:active{
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(0,0,0,.10);
+}
+
+/* Make icon-only buttons square */
+.btn-ui.btn-icon,
+.ui-controls-bar .btn-icon,
+.prop-top-controls .btn-icon,
+.lease-unified-row .btn-icon{
+  width: var(--ui-h);
+  padding: 0;
+}
+
+/* =============== Responsive: prevent overlaps =============== */
+@media (max-width: 720px){
+  .ui-controls-bar,
+  .prop-top-controls,
+  .lease-unified-row{
+    gap:8px;
+    padding:10px;
+  }
+  .ui-search-wrap,
+  .prop-search-wrap,
+  .lease-search-pill{
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .ui-control{
+    flex: 1 1 160px;
+  }
+  .ui-controls-bar select,
+  .ui-controls-bar input{
+    width: 100%;
+  }
+}

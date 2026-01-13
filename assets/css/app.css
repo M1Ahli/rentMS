@@ -1,0 +1,826 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Tajawal:wght@400;500;700&display=swap');
+
+/* =========================================================
+   Clean Style System (Single Source of Truth)
+   - الهدف: استبدال الستايل القديم بالكامل لمنع تداخل/تعارض القواعد
+   - يعتمد على Tailwind للـ utilities، وهذا الملف للتنسيقات المشتركة
+   ========================================================= */
+
+:root{
+  /* Theme */
+  --bg: #f6f7fb;
+  --text: #0f172a;
+  --muted: #6b7280;
+
+  /* Glass */
+  --glass: rgba(255,255,255,.72);
+  --glass2: rgba(255,255,255,.55);
+  --border: rgba(2,6,23,.10);
+  --border2: rgba(2,6,23,.14);
+  --shadow: 0 10px 30px rgba(2,6,23,.10);
+  --shadowSoft: 0 8px 22px rgba(2,6,23,.08);
+
+  /* Radii + sizes */
+  --r-xl: 18px;
+  --r-lg: 16px;
+  --r-md: 12px;
+  --h: 40px;
+
+  /* Accent */
+  --accent: #7c3aed; /* purple-600 */
+  --accent2: #a855f7; /* purple-500 */
+  --focus: rgba(124,58,237,.28);
+}
+
+body.dark-mode{
+  --bg: #0b1220;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+
+  --glass: rgba(17,24,39,.55);
+  --glass2: rgba(31,41,55,.45);
+  --border: rgba(255,255,255,.12);
+  --border2: rgba(255,255,255,.18);
+  --shadow: 0 14px 34px rgba(0,0,0,.32);
+  --shadowSoft: 0 10px 26px rgba(0,0,0,.22);
+
+  --focus: rgba(124,58,237,.35);
+}
+
+/* ---------- Base ---------- */
+html, body{ height:100%; }
+body{
+  font-family: 'Tajawal','Cairo',system-ui,sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Improve Arabic rendering */
+*{ -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Focus */
+:where(button, input, select, textarea):focus{
+  outline: none;
+}
+
+/* ---------- Nav ---------- */
+body > nav,
+#nav-slot nav{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  margin: 10px 0 24px;
+  border-radius: var(--r-xl);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.nav-btn{
+  height: 38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: transform .08s ease, background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease;
+}
+.nav-btn:hover{
+  background: var(--glass2);
+  border-color: var(--border);
+  color: var(--text);
+}
+.nav-btn:active{ transform: translateY(1px); }
+
+.nav-btn.active{
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff;
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 10px 25px rgba(124,58,237,.28);
+}
+
+/* ---------- Glass Cards ---------- */
+.glass-card{
+  background: var(--glass) !important;
+  /* Use a 1px inset shadow as a border so we DON'T override Tailwind border-* accent colors */
+  box-shadow: 0 0 0 1px var(--border), var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* ---------- Modals (helpers) ---------- */
+.modal-glass{
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.modal-header-glass{
+  background: var(--glass2);
+}
+
+/* ---------- Unified UI Kit (Search/Sort/Buttons) ---------- */
+.ui-controls-bar,
+.prop-top-controls,
+.lease-unified-row,
+#reports-view .no-print > .flex.flex-col,
+#reports-view .no-print > .flex.flex-col + .mt-3,
+#reports-view .flex.flex-col.sm\:flex-row.gap-2.items-stretch.sm\:items-center.ml-2,
+#reports-view .mt-3.sm\:mt-0.flex.flex-col.sm\:flex-row.gap-2.items-stretch.sm\:items-center.no-print{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  background: var(--glass);
+  border:1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Keep bars from stretching oddly */
+.ui-controls-bar{ width:100%; }
+
+
+
+/* ---------- Properties toolbar (rebuild v2) ---------- */
+.prop-toolbar{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  padding:10px 12px;
+  background: var(--glass);
+  border:1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.prop-toolbar-row{
+  display:flex;
+  flex-wrap: wrap;
+  align-items:center;
+  gap:10px;
+  width:100%;
+}
+.prop-toolbar-row1{ justify-content:flex-start; }
+.prop-toolbar-row2{ justify-content:flex-start; }
+
+.prop-toolbar .prop-search-wrap{ flex: 1 1 360px; max-width: 640px; }
+.prop-toolbar .prop-search-input{ width: 100%; min-width: 240px; }
+
+.prop-toolbar .prop-sort-pill,
+.prop-toolbar .unit-sort-pill{
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+@media (max-width: 900px){
+  .prop-toolbar .prop-sort-pill,
+  .prop-toolbar .unit-sort-pill{
+    flex: 1 1 380px;
+  }
+}
+@media (max-width: 640px){
+  .prop-toolbar .prop-search-wrap{ flex: 1 1 100%; max-width: 100%; }
+}
+/* Pills / Groups */
+.ui-control,
+.prop-expand-group,
+.prop-sort-group,
+.lease-sort-pill{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 8px;
+  background: var(--glass2);
+  border:1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: 0 6px 18px rgba(2,6,23,.06);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* Fields */
+.ui-field,
+.ui-controls-bar input,
+.ui-controls-bar select,
+.prop-top-controls input,
+.prop-top-controls select,
+.lease-unified-row input,
+.lease-unified-row select{
+  height: var(--h);
+  min-height: var(--h);
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.75);
+  color: var(--text);
+  padding: 0 12px;
+  font-size: 13px;
+  line-height: 1;
+  box-shadow: none;
+}
+body.dark-mode .ui-field,
+body.dark-mode .ui-controls-bar input,
+body.dark-mode .ui-controls-bar select,
+body.dark-mode .prop-top-controls input,
+body.dark-mode .prop-top-controls select,
+body.dark-mode .lease-unified-row input,
+body.dark-mode .lease-unified-row select{
+  background: rgba(0,0,0,.20);
+  color: var(--text);
+  border-color: var(--border2);
+}
+
+.ui-field::placeholder{ color: rgba(107,114,128,.85); }
+body.dark-mode .ui-field::placeholder{ color: rgba(156,163,175,.75); }
+
+.ui-field:focus,
+.ui-controls-bar input:focus,
+.ui-controls-bar select:focus{
+  border-color: rgba(124,58,237,.55);
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+
+/* ---------- Global Form Controls (Dark Mode Safety) ---------- */
+/* Some inputs are not inside the unified bars; ensure text/background stay readable in Dark Mode */
+:where(input, select, textarea){
+  color: var(--text);
+  caret-color: var(--text);
+}
+:where(input, select, textarea)::placeholder{ color: rgba(107,114,128,.85); }
+
+/* Skip special input types */
+:where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
+  background: rgba(255,255,255,.75);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+}
+body.dark-mode :where(input, select, textarea):not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]){
+  background: rgba(0,0,0,.22);
+  border-color: var(--border2);
+  color: var(--text);
+}
+body.dark-mode :where(input, select, textarea)::placeholder{ color: rgba(156,163,175,.75); }
+
+/* Make sure any Tailwind bg-white inputs also turn dark */
+body.dark-mode input.bg-white,
+body.dark-mode select.bg-white,
+body.dark-mode textarea.bg-white{
+  background-color: rgba(0,0,0,.22) !important;
+  color: var(--text) !important;
+}
+body.dark-mode input.bg-white::placeholder,
+body.dark-mode select.bg-white::placeholder,
+body.dark-mode textarea.bg-white::placeholder{
+  color: rgba(156,163,175,.75) !important;
+}
+
+/* Native select dropdown options (Dark Mode) */
+/* Some browsers render the opened option list with a light background but inherit the select text color.
+   Force readable option colors. */
+body.dark-mode{
+  color-scheme: dark;
+}
+:root{
+  color-scheme: light dark;
+}
+
+/* Some browsers render the opened option list using OS colors; we still force readable colors. */
+body.dark-mode select option,
+body.dark-mode select optgroup{
+  background-color: #0b1220 !important;
+  color: #e5e7eb !important;
+}
+
+
+/* Buttons */
+.btn-ui{
+  height: var(--h);
+  min-height: var(--h);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.78);
+  color: var(--text);
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition: transform .08s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease;
+}
+body.dark-mode .btn-ui{
+  /* Brighter glass buttons in Dark Mode */
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+  color: var(--text);
+}
+.btn-ui:hover{ background: rgba(255,255,255,.92); box-shadow: 0 10px 22px rgba(2,6,23,.10); }
+body.dark-mode .btn-ui:hover{ background: rgba(255,255,255,.14); box-shadow: 0 10px 22px rgba(0,0,0,.28); }
+.btn-ui:active{ transform: translateY(1px); }
+
+.btn-ui.btn-icon{
+  width: var(--h);
+  padding: 0;
+}
+
+.btn-ui.btn-success{
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: rgba(255,255,255,.22);
+  color: #fff;
+}
+.btn-ui.btn-success:hover{ box-shadow: 0 14px 28px rgba(16,185,129,.22); }
+
+.btn-ui.btn-filter{
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-color: rgba(255,255,255,.22);
+  color: #fff;
+}
+.btn-ui.btn-filter:hover{ box-shadow: 0 14px 28px rgba(124,58,237,.22); }
+
+.btn-ui.btn-secondary{
+  background: rgba(17,24,39,.10);
+}
+body.dark-mode .btn-ui.btn-secondary{
+  background: rgba(255,255,255,.08);
+}
+
+.btn-ui.btn-reset{
+  background: rgba(244,63,94,.10);
+  border-color: rgba(244,63,94,.18);
+  color: #be123c;
+}
+body.dark-mode .btn-ui.btn-reset{
+  background: rgba(244,63,94,.14);
+  border-color: rgba(244,63,94,.22);
+  color: #fecdd3;
+}
+
+.btn-ui.btn-ui-sm{
+  height: 34px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 900;
+}
+.btn-page-active{
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color:#fff;
+  border-color: rgba(255,255,255,.22);
+}
+
+
+/* Extra helpers for advanced bars */
+.ui-rtl-end{ justify-content: flex-end; }
+.ui-mainbar{ justify-content: space-between; }
+.ui-advbar{ width: 100%; }
+.ui-advbar-meta{
+  margin-top: 10px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+.ui-ctl-divider{
+  width: 1px;
+  height: 28px;
+  background: var(--border2);
+  opacity: .85;
+}
+.ui-button{
+  height: var(--h);
+  min-height: var(--h);
+  width: var(--h);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 14px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.78);
+  font-weight: 900;
+}
+body.dark-mode .ui-button{
+  background: rgba(255,255,255,.10);
+  border-color: rgba(255,255,255,.18);
+  color: var(--text);
+}
+
+/* Small labels + vertical stacks (used in Properties filters, etc.) */
+.ui-label{
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--muted);
+  line-height: 1.1;
+}
+.ui-stack{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Generic search wrap (used by enhancer + pages) */
+.ui-search-wrap{ position: relative; }
+.ui-search-icon{
+  position:absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .70;
+  pointer-events:none;
+}
+
+/* Let enhancer make most search inputs full-width, but keep Properties search fixed */
+.ui-ctl-input:not(.prop-search-input){
+  width: 100%;
+}
+
+/* Add icon space for inputs inside a search wrap */
+.ui-search-wrap input.ui-ctl-input{
+  padding-left: 44px;
+}
+
+/* Properties search sizing */
+.prop-search-input{
+  width: 260px;
+  min-width: 200px;
+  padding-left: 40px; /* icon space */
+}
+@media (max-width: 640px){
+  .prop-search-input{ width: 100%; }
+  .prop-search-wrap{ flex: 1 1 260px; }
+}
+
+/* Search icon positioning */
+.prop-search-wrap, .ui-search-wrap{ position: relative; }
+.prop-search-ic{
+  position:absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .65;
+  pointer-events:none;
+}
+
+/* ---------- Leases bar (minimal) ---------- */
+.lease-unified-bar{
+  border-radius: var(--r-xl);
+}
+.lease-unified-row{
+  justify-content: space-between;
+  width: 100%;
+}
+.lease-search-pill{
+  position: relative;
+  flex: 1 1 420px;
+  max-width: 680px;
+}
+.lease-search-input{
+  width: 100%;
+  padding-left: 44px; /* icon space */
+}
+.lease-search-icon{
+  position:absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: .70;
+  pointer-events:none;
+}
+.lease-actions-group{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:10px;
+}
+.lease-bar-divider{
+  width: 1px;
+  height: 28px;
+  background: var(--border2);
+  opacity: .8;
+}
+.lease-bar-meta{
+  margin-top: 10px;
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.lease-filters-panel{
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadowSoft);
+  padding: 12px;
+  margin: 12px 0;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.lease-filters-grid{
+  display:grid;
+  grid-template-columns: repeat(1, minmax(0,1fr));
+  gap: 12px;
+}
+@media (min-width: 900px){
+  .lease-filters-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); }
+}
+.lease-label{
+  display:block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  font-weight: 800;
+}
+.lease-inline-2{ display:flex; gap:10px; }
+
+/* ---------- Tables ---------- */
+.table-wrap{
+  border-radius: var(--r-xl);
+  overflow: auto;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSoft);
+  background: var(--glass) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.ui-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ui-table thead th{
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: rgba(255,255,255,.85);
+  color: rgba(55,65,81,.95);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--border);
+}
+body.dark-mode .ui-table thead th{
+  background: rgba(17,24,39,.78);
+  color: rgba(229,231,235,.92);
+  border-bottom-color: var(--border);
+}
+.ui-table tbody td{
+  padding: 12px 12px;
+  border-bottom: 1px solid rgba(2,6,23,.07);
+  vertical-align: top;
+}
+body.dark-mode .ui-table tbody td{
+  border-bottom-color: rgba(255,255,255,.08);
+}
+.ui-table tbody tr:hover td{
+  background: rgba(124,58,237,.06);
+}
+body.dark-mode .ui-table tbody tr:hover td{
+  background: rgba(124,58,237,.14);
+}
+
+/* ---------- Badges ---------- */
+.badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid rgba(2,6,23,.10);
+  background: rgba(2,6,23,.04);
+  color: rgba(55,65,81,.95);
+}
+body.dark-mode .badge{
+  border-color: rgba(255,255,255,.14);
+  background: rgba(255,255,255,.08);
+  color: rgba(243,244,246,.92);
+}
+.badge-green{ background: rgba(16,185,129,.12); color:#065f46; border-color: rgba(16,185,129,.18); }
+.badge-red{ background: rgba(244,63,94,.12); color:#9f1239; border-color: rgba(244,63,94,.18); }
+.badge-amber{ background: rgba(245,158,11,.14); color:#92400e; border-color: rgba(245,158,11,.22); }
+.badge-blue{ background: rgba(59,130,246,.14); color:#1e3a8a; border-color: rgba(59,130,246,.22); }
+.badge-emerald{ background: rgba(16,185,129,.12); color:#065f46; border-color: rgba(16,185,129,.18); }
+.badge-orange{ background: rgba(249,115,22,.14); color:#9a3412; border-color: rgba(249,115,22,.22); }
+.badge-crimson{ background: rgba(220,38,38,.12); color:#7f1d1d; border-color: rgba(220,38,38,.18); }
+
+/* Standalone count badges used in health report */
+.badge-red, .badge-amber, .badge-blue{ display:inline-flex; }
+
+body.dark-mode .badge-green{ background: rgba(16,185,129,.18); color:#d1fae5; }
+body.dark-mode .badge-red{ background: rgba(244,63,94,.18); color:#ffe4e6; }
+body.dark-mode .badge-amber{ background: rgba(245,158,11,.18); color:#ffedd5; }
+body.dark-mode .badge-blue{ background: rgba(59,130,246,.18); color:#dbeafe; }
+body.dark-mode .badge-orange{ background: rgba(249,115,22,.18); color:#ffedd5; }
+body.dark-mode .badge-crimson{ background: rgba(220,38,38,.18); color:#fee2e2; }
+
+/* ---------- Pager ---------- */
+.pager-wrap{
+  margin-top: 12px;
+}
+.pager-top{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-xl);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.pager-info{
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+.pager-size{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+.pager-size-label{
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 800;
+}
+.pager-size-select{
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.75);
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 900;
+}
+body.dark-mode .pager-size-select{
+  background: rgba(0,0,0,.22);
+  border-color: var(--border2);
+  color: var(--text);
+}
+.pager-pages{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 8px;
+  align-items:center;
+}
+.pager-ellipsis{
+  color: var(--muted);
+  font-weight: 900;
+}
+
+/* ---------- Toast ---------- */
+.toast-item{
+  pointer-events: auto;
+  display:flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform .22s ease, opacity .22s ease;
+}
+.toast-item.toast-hide{
+  transform: translateY(-6px);
+  opacity: 0;
+}
+.toast-ic{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(124,58,237,.10);
+  border: 1px solid rgba(124,58,237,.14);
+}
+.toast-body{ flex:1 1 auto; min-width: 0; }
+.toast-title{ font-weight: 900; font-size: 13px; margin-bottom: 2px; }
+.toast-msg{ font-size: 12px; color: var(--muted); }
+.toast-actions{ display:flex; align-items:center; }
+.toast-x{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.75);
+  font-weight: 900;
+}
+body.dark-mode .toast-x{
+  background: rgba(0,0,0,.22);
+  color: var(--text);
+}
+
+.toast-item[data-type="success"] .toast-ic{ background: rgba(16,185,129,.16); border-color: rgba(16,185,129,.22); }
+.toast-item[data-type="error"] .toast-ic{ background: rgba(244,63,94,.16); border-color: rgba(244,63,94,.22); }
+.toast-item[data-type="warn"] .toast-ic{ background: rgba(245,158,11,.16); border-color: rgba(245,158,11,.22); }
+.toast-item[data-type="info"] .toast-ic{ background: rgba(59,130,246,.16); border-color: rgba(59,130,246,.22); }
+
+/* ---------- Letters ---------- */
+.letter-list{
+  margin: 8px 0;
+  padding-right: 18px;
+  list-style: disc;
+}
+.letter-p{
+  margin: 8px 0;
+  line-height: 1.9;
+}
+
+/* ---------- Health KPI ---------- */
+.health-kpi{
+  display:flex;
+  flex-wrap:wrap;
+  gap: 10px;
+  align-items:center;
+  padding: 10px 12px;
+  border-radius: var(--r-xl);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.health-kpi .k{
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--muted);
+}
+
+/* ---------- Utilities ---------- */
+.truncate-text{
+  display:inline-block;
+  max-width: 240px;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.ui-td-ltr{
+  direction: ltr;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.no-print{}
+@media print{
+  body{ background:#fff !important; }
+  nav, .no-print{ display:none !important; }
+  .table-wrap{ box-shadow:none !important; border-color:#ddd !important; background:#fff !important; }
+}
+
+/* ---------- Dark Mode Utility Overrides (Tailwind-friendly) ---------- */
+body.dark-mode .bg-white{ background-color: rgba(17,24,39,.55) !important; }
+body.dark-mode .bg-gray-50{ background-color: rgba(31,41,55,.35) !important; }
+body.dark-mode .bg-gray-100{ background-color: rgba(31,41,55,.45) !important; }
+body.dark-mode .bg-gray-200{ background-color: rgba(55,65,81,.55) !important; }
+
+body.dark-mode .text-gray-800{ color: rgba(229,231,235,.92) !important; }
+body.dark-mode .text-gray-700{ color: rgba(209,213,219,.92) !important; }
+body.dark-mode .text-gray-600{ color: rgba(156,163,175,.92) !important; }
+body.dark-mode .text-gray-500{ color: rgba(156,163,175,.86) !important; }
+
+body.dark-mode .border-gray-50,
+body.dark-mode .border-gray-100,
+body.dark-mode .border-gray-200,
+body.dark-mode .border-gray-300{ border-color: rgba(255,255,255,.12) !important; }
+
+body.dark-mode .divide-gray-200 > :not([hidden]) ~ :not([hidden]){ border-color: rgba(255,255,255,.12) !important; }
+
+body.dark-mode .shadow,
+body.dark-mode .shadow-sm,
+body.dark-mode .shadow-md,
+body.dark-mode .shadow-lg{ box-shadow: 0 14px 34px rgba(0,0,0,.32) !important; }
