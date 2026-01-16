@@ -3,19 +3,25 @@
 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">سجل المستأجرين</h2>
 </div>
 <div class="table-wrap mb-4">
-<div class="ui-controls-bar" data-ui-controls="tenants">
-<div class="ui-control ui-search ui-search-wrap">
-<span aria-hidden="true">🔍</span>
-<input class="ui-field w-full" id="tenants-search" oninput="renderTenantsDebounced()" placeholder="بحث عن مستأجر بالاسم، الهاتف أو البريد..." type="text"/>
-</div>
-<div class="ui-control ui-sort">
-<select class="ui-field ui-select w-full" id="tenants-sort-by" onchange="onTenantSortChanged()">
-<option value="name">الاسم</option>
-<option value="balance">الرصيد المتبقي</option>
-</select>
-</div>
-<button aria-label="تبديل اتجاه الفرز" class="ui-control ui-dir ui-button" id="tenants-sort-dir" onclick="toggleTenantSortDir()">⬆️</button>
-</div>
+  <div class="ui-toolbar" data-ui-controls="tenants" aria-label="شريط البحث والفرز">
+    <div class="ui-toolbar-row ui-toolbar-row1">
+      <div class="ui-control ui-search-wrap rtl" aria-label="بحث المستأجرين">
+        <span aria-hidden="true" class="ui-search-icon keep-icon">🔍</span>
+        <input class="ui-field ui-ctl-input ui-search-input" id="tenants-search" oninput="renderTenantsDebounced()" placeholder="بحث عن مستأجر بالاسم، الهاتف أو البريد..." type="text"/>
+      </div>
+    </div>
+
+    <div class="ui-toolbar-row ui-toolbar-row2">
+      <div class="ui-control ui-sort-pill" aria-label="فرز المستأجرين">
+        <span class="ui-label">فرز المستأجرين</span>
+        <select class="ui-field ui-select" id="tenants-sort-by" onchange="onTenantSortChanged()">
+          <option value="name">الاسم</option>
+          <option value="balance">الرصيد المتبقي</option>
+        </select>
+        <button aria-label="تبديل اتجاه الفرز" class="btn-ui btn-icon" id="tenants-sort-dir" onclick="toggleTenantSortDir()">⬆️</button>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="table-wrap bg-white shadow-sm">
 <table class="ui-table min-w-full text-right">

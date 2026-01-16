@@ -2,94 +2,102 @@
 <div class="flex items-center justify-between mb-6">
 <h2 class="text-2xl font-bold text-gray-800 dark:text-white">إدارة العقود</h2>
 </div>
-<div class="lease-unified-bar" id="leases-advanced-bar">
-<div aria-label="شريط البحث والفرز" class="lease-unified-row">
-<!-- Search (right side in RTL) -->
-<div aria-label="بحث" class="lease-search-pill" role="search">
-<input aria-label="بحث سريع" class="lease-search-input" id="lease-search-input" oninput="onLeaseAdvancedChangedDebounced()" placeholder="بحث سريع: رقم العقد، اسم المستأجر، الوحدة..." type="text"/>
-<span aria-hidden="true" class="lease-search-icon">🔍</span>
-</div>
-<!-- Controls (left side) -->
-<div aria-label="أدوات التحكم" class="lease-actions-group">
-<div aria-label="فرز" class="lease-sort-pill">
-<button class="btn-ui btn-icon lease-sort-dir" data-dir="asc" id="leases-sort-dir" onclick="toggleLeaseSortDir()" title="عكس ترتيب الفرز" type="button">⬆️</button>
-<select aria-label="ترتيب الفرز" class="ui-field ui-select lease-sort-by" id="leases-sort-by" onchange="onLeaseAdvancedChanged()">
-<option value="end">تاريخ الانتهاء</option>
-<option value="start">تاريخ البداية</option>
-<option value="rent">القيمة</option>
-<option value="tenant">المستأجر</option>
-<option value="unit">الوحدة</option>
-<option value="property">العقار</option>
-<option value="contractNo">رقم العقد</option>
-<option value="status">الحالة</option>
-</select>
-</div>
-<span aria-hidden="true" class="lease-bar-divider"></span>
-<button class="btn-ui btn-icon lease-reset-btn" id="leases-reset-btn" onclick="resetLeaseAdvanced()" title="إعادة ضبط" type="button">↻</button>
-<button class="btn-ui lease-filter-btn" id="leases-toggle-filters" onclick="toggleLeaseFilters()" title="فلتر متقدمة" type="button">
-<span class="lease-btn-ic">⚡</span>
-<span class="lease-filter-label">فلتر متقدمة</span>
-</button>
-<button class="btn-ui lease-add-btn" onclick="openAddLeaseModal()" title="عقد جديد" type="button">
-<span class="lease-btn-ic">+</span>
-<span>عقد جديد</span>
-</button>
-</div>
-</div>
-<div class="lease-bar-meta">
-<span class="lease-hint" id="leases-filter-hint"></span>
-</div>
+<!-- Advanced Search & Sort: Leases -->
+<div class="ui-toolbar" id="leases-advanced-bar" aria-label="شريط البحث والفرز">
+  <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
+    <button class="btn-ui btn-success" onclick="openAddLeaseModal()" type="button"><span>+</span> عقد جديد</button>
+
+    <button class="btn-ui btn-filter" id="leases-toggle-filters" onclick="toggleLeaseFilters()" title="فلتر متقدمة" type="button">
+      <span aria-hidden="true">⚡</span>
+      <span class="lease-filter-label">فلتر متقدمة</span>
+    </button>
+
+    <button class="btn-ui btn-reset" id="leases-reset-btn" onclick="resetLeaseAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
+
+    <div class="ui-control ui-search-wrap rtl" aria-label="بحث العقود" role="search">
+      <span aria-hidden="true" class="ui-search-icon">🔍</span>
+      <input aria-label="بحث سريع" class="ui-field ui-ctl-input ui-search-input" id="lease-search-input" oninput="onLeaseAdvancedChangedDebounced()" placeholder="بحث سريع: رقم العقد، اسم المستأجر، الوحدة..." type="text"/>
+    </div>
+  </div>
+
+  <div class="ui-toolbar-row ui-toolbar-row2" aria-label="الفرز">
+    <div class="ui-control ui-sort-pill" aria-label="فرز العقود">
+      <span class="ui-label">فرز العقود</span>
+      <select aria-label="ترتيب الفرز" class="ui-field ui-select" id="leases-sort-by" onchange="onLeaseAdvancedChanged()">
+        <option value="end">تاريخ الانتهاء</option>
+        <option value="start">تاريخ البداية</option>
+        <option value="rent">القيمة</option>
+        <option value="tenant">المستأجر</option>
+        <option value="unit">الوحدة</option>
+        <option value="property">العقار</option>
+        <option value="contractNo">رقم العقد</option>
+        <option value="status">الحالة</option>
+      </select>
+      <button class="btn-ui btn-icon" data-dir="asc" id="leases-sort-dir" onclick="toggleLeaseSortDir()" title="عكس ترتيب الفرز" type="button">⬆️</button>
+    </div>
+
+    <div class="ui-advbar-meta">
+      <span class="ui-hint" id="leases-filter-hint"></span>
+    </div>
+  </div>
 </div>
 <!-- Advanced Filters Panel (kept as a feature, toggled by "فلتر متقدمة") -->
-<div aria-label="الفلاتر المتقدمة" class="lease-filters-panel hidden" id="leases-filters-panel">
-<div class="lease-filters-grid">
-<div class="lease-field">
-<label class="lease-label">الحالة</label>
-<select class="ui-field ui-select" id="leases-filter-status" onchange="onLeaseAdvancedChanged()">
-<option value="">الكل</option>
-<option value="ساري">ساري</option>
-<option value="شارف على الانتهاء">شارف على الانتهاء</option>
-<option value="منتهي">منتهي</option>
-</select>
-</div>
-<div class="lease-field">
-<label class="lease-label">العقار</label>
-<input class="ui-field" id="leases-filter-prop" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم العقار..." type="text"/>
-</div>
-<div class="lease-field">
-<label class="lease-label">الوحدة</label>
-<input class="ui-field" id="leases-filter-unit" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم/رقم الوحدة..." type="text"/>
-</div>
-<div class="lease-field">
-<label class="lease-label">المستأجر</label>
-<input class="ui-field" id="leases-filter-tenant" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم المستأجر..." type="text"/>
-</div>
-<div class="lease-field">
-<label class="lease-label">رقم العقد</label>
-<input class="ui-field" id="leases-filter-contract" oninput="onLeaseAdvancedChangedDebounced()" placeholder="مثال: 512501" type="text"/>
-</div>
-<div class="lease-field">
-<label class="lease-label">الإيجار (من - إلى)</label>
-<div class="lease-inline-2">
-<input class="ui-field" id="leases-filter-rent-min" inputmode="numeric" oninput="onLeaseAdvancedChangedDebounced()" placeholder="من" type="number"/>
-<input class="ui-field" id="leases-filter-rent-max" inputmode="numeric" oninput="onLeaseAdvancedChangedDebounced()" placeholder="إلى" type="number"/>
-</div>
-</div>
-<div class="lease-field">
-<label class="lease-label">تاريخ البداية (من - إلى)</label>
-<div class="lease-inline-2">
-<input class="ui-field" id="leases-filter-start-from" onchange="onLeaseAdvancedChanged()" type="date"/>
-<input class="ui-field" id="leases-filter-start-to" onchange="onLeaseAdvancedChanged()" type="date"/>
-</div>
-</div>
-<div class="lease-field">
-<label class="lease-label">تاريخ الانتهاء (من - إلى)</label>
-<div class="lease-inline-2">
-<input class="ui-field" id="leases-filter-end-from" onchange="onLeaseAdvancedChanged()" type="date"/>
-<input class="ui-field" id="leases-filter-end-to" onchange="onLeaseAdvancedChanged()" type="date"/>
-</div>
-</div>
-</div>
+<div aria-label="الفلاتر المتقدمة" class="ui-toolbar-panel hidden" id="leases-filters-panel">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="leases-filter-status">الحالة</label>
+      <select class="ui-field ui-select" id="leases-filter-status" onchange="onLeaseAdvancedChanged()">
+        <option value="">الكل</option>
+        <option value="ساري">ساري</option>
+        <option value="شارف على الانتهاء">شارف على الانتهاء</option>
+        <option value="منتهي">منتهي</option>
+      </select>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="leases-filter-prop">العقار</label>
+      <input class="ui-field" id="leases-filter-prop" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم العقار..." type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="leases-filter-unit">الوحدة</label>
+      <input class="ui-field" id="leases-filter-unit" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم/رقم الوحدة..." type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="leases-filter-tenant">المستأجر</label>
+      <input class="ui-field" id="leases-filter-tenant" oninput="onLeaseAdvancedChangedDebounced()" placeholder="اسم المستأجر..." type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="leases-filter-contract">رقم العقد</label>
+      <input class="ui-field" id="leases-filter-contract" oninput="onLeaseAdvancedChangedDebounced()" placeholder="مثال: 512501" type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">الإيجار (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="leases-filter-rent-min" inputmode="numeric" oninput="onLeaseAdvancedChangedDebounced()" placeholder="من" type="number"/>
+        <input class="ui-field w-full" id="leases-filter-rent-max" inputmode="numeric" oninput="onLeaseAdvancedChangedDebounced()" placeholder="إلى" type="number"/>
+      </div>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">تاريخ البداية (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="leases-filter-start-from" onchange="onLeaseAdvancedChanged()" type="date"/>
+        <input class="ui-field w-full" id="leases-filter-start-to" onchange="onLeaseAdvancedChanged()" type="date"/>
+      </div>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">تاريخ الانتهاء (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="leases-filter-end-from" onchange="onLeaseAdvancedChanged()" type="date"/>
+        <input class="ui-field w-full" id="leases-filter-end-to" onchange="onLeaseAdvancedChanged()" type="date"/>
+      </div>
+    </div>
+  </div>
 </div>
 <div class="table-wrap bg-white shadow-sm">
 <table class="ui-table min-w-full table-fixed text-right">

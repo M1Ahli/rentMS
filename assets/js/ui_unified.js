@@ -6,6 +6,25 @@
 (function(){
   function add(cls, el){ if(el && !el.classList.contains(cls)) el.classList.add(cls); }
 
+  function enhanceModal(modal){
+    if(!modal) return;
+    // Enhance only overlay-style modals (full-screen fixed). Keep custom ones as-is.
+    if(modal.id === 'lease-payment-modal') return;
+
+    if(modal.classList.contains('fixed') && modal.classList.contains('inset-0')){
+      add('app-modal', modal);
+    }
+
+    // Unify fields inside modals (without touching IDs / logic)
+    modal.querySelectorAll('input, select, textarea').forEach(el=>{
+      const tag = el.tagName;
+      const type = (el.getAttribute('type') || '').toLowerCase();
+      if(type === 'hidden' || type === 'file') return;
+      add('ui-field', el);
+      if(tag === 'SELECT') add('ui-select', el);
+    });
+  }
+
   function enhanceBar(bar){
     if(!bar) return;
     bar.querySelectorAll('input, select').forEach(el=>{
@@ -22,7 +41,10 @@
   }
 
   function run(){
-    document.querySelectorAll('.ui-controls-bar, .prop-top-controls, .lease-unified-row').forEach(enhanceBar);
+    document.querySelectorAll('.ui-controls-bar, .ui-toolbar, .ui-toolbar-panel, .prop-top-controls, .lease-unified-row').forEach(enhanceBar);
+
+    // Modals
+    document.querySelectorAll('div[id$="-modal"]').forEach(enhanceModal);
   }
 
   // Run now + after bootstrap finishes inserting HTML

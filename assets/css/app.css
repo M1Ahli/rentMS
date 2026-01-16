@@ -133,6 +133,53 @@ body > nav,
   background: var(--glass2);
 }
 
+/* ---------- Modal Scroll / Fit ---------- */
+/* When body is scroll-locked (modal open), the overlay itself must scroll on small screens */
+#unit-modal,
+#property-modal,
+#lease-modal,
+#add-lease-modal,
+#payment-modal,
+#tenant-modal,
+#cheque-modal,
+#cheque-link-modal,
+#lease-payment-modal{
+  overflow-y: auto;
+}
+
+@media (max-height: 760px), (max-width: 640px){
+  #unit-modal,
+  #property-modal,
+  #lease-modal,
+  #add-lease-modal,
+  #payment-modal,
+  #tenant-modal,
+  #cheque-modal,
+  #cheque-link-modal{
+    /* the overlays are flex containers in markup; start from top for better scrolling */
+    align-items: flex-start;
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+}
+
+/* Make modal content fit within the viewport and allow internal scrolling */
+#unit-modal .modal-content,
+#property-modal .modal-content,
+#lease-modal .modal-content,
+#add-lease-modal .modal-content,
+#payment-modal .modal-content,
+#tenant-modal .modal-content,
+#cheque-modal .modal-content,
+#cheque-link-modal .modal-content{
+  max-height: calc(100vh - 48px);
+}
+
+/* Unit edit modal had overflow-hidden in markup; allow scrolling when content exceeds height */
+#unit-modal .modal-content{
+  overflow: auto !important;
+}
+
 /* ---------- Unified UI Kit (Search/Sort/Buttons) ---------- */
 .ui-controls-bar,
 .prop-top-controls,
@@ -159,7 +206,9 @@ body > nav,
 
 
 
-/* ---------- Properties toolbar (rebuild v2) ---------- */
+/* ---------- Universal Toolbar (Search/Sort/Filters) ---------- */
+/* Used across pages to keep search/sort bars consistent */
+.ui-toolbar,
 .prop-toolbar{
   display:flex;
   flex-direction: column;
@@ -173,6 +222,8 @@ body > nav,
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+
+.ui-toolbar-row,
 .prop-toolbar-row{
   display:flex;
   flex-wrap: wrap;
@@ -180,12 +231,18 @@ body > nav,
   gap:10px;
   width:100%;
 }
+
+.ui-toolbar-row1,
 .prop-toolbar-row1{ justify-content:flex-start; }
+.ui-toolbar-row2,
 .prop-toolbar-row2{ justify-content:flex-start; }
 
+.ui-toolbar .ui-search-wrap,
 .prop-toolbar .prop-search-wrap{ flex: 1 1 360px; max-width: 640px; }
+.ui-toolbar .ui-search-input,
 .prop-toolbar .prop-search-input{ width: 100%; min-width: 240px; }
 
+.ui-toolbar .ui-sort-pill,
 .prop-toolbar .prop-sort-pill,
 .prop-toolbar .unit-sort-pill{
   flex: 0 0 auto;
@@ -193,13 +250,28 @@ body > nav,
 }
 
 @media (max-width: 900px){
+  .ui-toolbar .ui-sort-pill,
   .prop-toolbar .prop-sort-pill,
   .prop-toolbar .unit-sort-pill{
     flex: 1 1 380px;
   }
 }
 @media (max-width: 640px){
+  .ui-toolbar .ui-search-wrap,
   .prop-toolbar .prop-search-wrap{ flex: 1 1 100%; max-width: 100%; }
+}
+
+/* Collapsible advanced panels under toolbars */
+.ui-toolbar-panel{
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  background: var(--glass);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadowSoft);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 /* Pills / Groups */
 .ui-control,
@@ -333,13 +405,16 @@ body.dark-mode select optgroup{
   transition: transform .08s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease;
 }
 body.dark-mode .btn-ui{
-  /* Brighter glass buttons in Dark Mode */
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.18);
-  color: var(--text);
+  /* Make buttons clear & "colored" (vivid) in Dark Mode like Light Mode */
+  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.12));
+  border-color: rgba(255,255,255,.26);
+  color: #f8fafc;
 }
 .btn-ui:hover{ background: rgba(255,255,255,.92); box-shadow: 0 10px 22px rgba(2,6,23,.10); }
-body.dark-mode .btn-ui:hover{ background: rgba(255,255,255,.14); box-shadow: 0 10px 22px rgba(0,0,0,.28); }
+body.dark-mode .btn-ui:hover{
+  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.16));
+  box-shadow: 0 12px 24px rgba(0,0,0,.30);
+}
 .btn-ui:active{ transform: translateY(1px); }
 
 .btn-ui.btn-icon{
@@ -361,11 +436,26 @@ body.dark-mode .btn-ui:hover{ background: rgba(255,255,255,.14); box-shadow: 0 1
 }
 .btn-ui.btn-filter:hover{ box-shadow: 0 14px 28px rgba(124,58,237,.22); }
 
+
+
+.btn-ui.btn-danger{
+  background: linear-gradient(135deg, rgba(244,63,94,1), rgba(225,29,72,1));
+  border-color: rgba(255,255,255,.22);
+  color: #fff;
+}
+.btn-ui.btn-danger:hover{ box-shadow: 0 10px 28px rgba(225,29,72,.30); }
+
+/* Small icon buttons inside tables */
+.btn-ui.btn-ui-sm.btn-icon{ width: 34px; padding: 0; }
+
+/* Compact action group inside tables */
+.ui-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .btn-ui.btn-secondary{
   background: rgba(17,24,39,.10);
 }
 body.dark-mode .btn-ui.btn-secondary{
-  background: rgba(255,255,255,.08);
+  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.10));
+  border-color: rgba(255,255,255,.22);
 }
 
 .btn-ui.btn-reset{
@@ -424,9 +514,9 @@ body.dark-mode .btn-ui.btn-reset{
   font-weight: 900;
 }
 body.dark-mode .ui-button{
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.18);
-  color: var(--text);
+  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.12));
+  border-color: rgba(255,255,255,.26);
+  color: #f8fafc;
 }
 
 /* Small labels + vertical stacks (used in Properties filters, etc.) */
@@ -451,6 +541,16 @@ body.dark-mode .ui-button{
   transform: translateY(-50%);
   opacity: .70;
   pointer-events:none;
+}
+
+/* RTL search icon alignment (Arabic UI) */
+.ui-search-wrap.rtl .ui-search-icon{
+  left: auto;
+  right: 12px;
+}
+.ui-search-wrap.rtl input.ui-ctl-input{
+  padding-right: 44px;
+  padding-left: 12px;
 }
 
 /* Let enhancer make most search inputs full-width, but keep Properties search fixed */
@@ -796,10 +896,264 @@ body.dark-mode .toast-x{
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 .no-print{}
+
+
+/* ---------- Letter / Notice Paper ---------- */
+.letter-paper{
+  position: relative;
+  background: #fff;
+  color: #111;
+  border: 2.5px solid rgba(0,0,0,.18);
+  border-radius: 22px;
+  padding: 28px 30px;
+  max-width: 980px;
+  margin: 0 auto;
+  box-shadow: 0 18px 50px rgba(0,0,0,.10);
+}
+body.dark-mode .letter-paper{
+  background: rgba(15,23,42,.35);
+  color: rgba(229,231,235,.96);
+  border-color: rgba(255,255,255,.14);
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
+}
+.letter-head{ font-size: 13px; line-height: 1.45; }
+.letter-head-lines{ text-align: right; }
+
+.letter-title{ margin-top: 18px; margin-bottom: 10px; }
+.letter-title-ar{ font-size: 18px; font-weight: 800; text-align: right; }
+.letter-title-en{ font-size: 14px; font-weight: 700; text-align: left; margin-top: 6px; opacity: .95; }
+
+.letter-paper.letter-bilingual .letter-title{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.letter-paper.letter-bilingual .letter-title-en{ margin-top: 0; }
+
+.letter-meta{
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0,0,0,.12);
+  font-size: 13px;
+}
+body.dark-mode .letter-meta{ border-top-color: rgba(255,255,255,.12); }
+.letter-meta b{ font-weight: 800; }
+
+.letter-paper.letter-bilingual .letter-meta{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.letter-meta-col{
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.letter-columns{
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.letter-col{
+  padding: 14px 14px;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px;
+  background: rgba(248,250,252,.92);
+}
+body.dark-mode .letter-col{
+  background: rgba(2,6,23,.25);
+  border-color: rgba(255,255,255,.10);
+}
+
+.letter-body{
+  font-size: 14px;
+  line-height: 1.95;
+  white-space: pre-wrap;
+}
+.letter-edit{ outline: none; }
+.letter-edit:focus{
+  box-shadow: 0 0 0 2px rgba(59,130,246,.25);
+  border-radius: 14px;
+}
+
+.letter-attachments{ margin-top: 14px; }
+.letter-attachments-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.letter-attachments-col{
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,.10);
+  border-radius: 16px;
+  background: rgba(248,250,252,.92);
+}
+body.dark-mode .letter-attachments-col{
+  background: rgba(2,6,23,.25);
+  border-color: rgba(255,255,255,.10);
+}
+.att-title{ font-weight: 800; font-size: 13px; }
+.letter-list{ margin: 8px 0 0; padding: 0 18px; }
+.letter-list li{ margin: 3px 0; }
+
+.letter-signature{
+  margin-top: 18px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+.seal-box{
+  width: 132px;
+  height: 84px;
+  border: 2px dashed rgba(0,0,0,.25);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 12px;
+  color: #333;
+}
+body.dark-mode .seal-box{
+  border-color: rgba(255,255,255,.22);
+  color: rgba(203,213,225,.95);
+}
+.sig-lines{ text-align: right; font-size: 12px; line-height: 1.6; }
+
+@media (max-width: 900px){
+  .letter-paper.letter-bilingual .letter-title,
+  .letter-paper.letter-bilingual .letter-meta,
+  .letter-columns,
+  .letter-attachments-grid{
+    grid-template-columns: 1fr;
+  }
+  .letter-title-en{ text-align: right; }
+}
+
+/* ---------- Draft Print Watermark (Notices) ---------- */
+body.print-draft #notice-preview{
+  position: relative;
+}
+body.print-draft #notice-preview::before{
+  content: "نسخة تجريبية";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 64px;
+  letter-spacing: 2px;
+  transform: rotate(-18deg);
+  opacity: .10;
+  pointer-events: none;
+  white-space: nowrap;
+}
+@media (max-width: 640px){
+  body.print-draft #notice-preview::before{ font-size: 44px; }
+}
+
 @media print{
-  body{ background:#fff !important; }
+  /* Force predictable full-page layout */
+  @page{ size:A4 portrait; margin: 0; }
+  html, body{ margin:0 !important; padding:0 !important; }
+  body{
+    background:#fff !important;
+    color:#111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.dark-mode{ background:#fff !important; color:#111 !important; }
+
   nav, .no-print{ display:none !important; }
-  .table-wrap{ box-shadow:none !important; border-color:#ddd !important; background:#fff !important; }
+
+  /* =========================
+     NOTICE PRINT (Two Columns)
+     ========================= */
+  body.print-notice *{ visibility:hidden !important; }
+  body.print-notice #notice-preview,
+  body.print-notice #notice-preview *{ visibility:visible !important; }
+
+  body.print-notice #notice-preview{
+    position: fixed !important;
+    inset: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  body.print-notice .letter-paper{
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    background: #fff !important;
+    color: #111 !important;
+    border: 4px solid #111 !important;
+    border-radius: 0 !important;
+    padding: 12mm 12mm !important;
+  }
+
+  body.print-notice .letter-head-lines{ font-size: 11px !important; line-height: 1.5 !important; }
+  body.print-notice .letter-title{ margin-top: 8mm !important; }
+  body.print-notice .letter-meta{ margin-top: 6mm !important; }
+  body.print-notice .letter-body{ font-size: 12.5px !important; line-height: 1.8 !important; }
+
+  /* Ensure English stays LEFT and Arabic stays RIGHT (stable placement) */
+  body.print-notice .letter-columns{
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8mm !important;
+    direction: ltr !important;
+    align-items: start !important;
+    grid-template-areas: "en ar" !important;
+  }
+  body.print-notice .letter-col[dir="ltr"]{ grid-area: en !important; }
+  body.print-notice .letter-col[dir="rtl"]{ grid-area: ar !important; }
+
+  body.print-notice .letter-col{
+    background: transparent !important;
+    border: 2px solid #111 !important;
+    border-radius: 12px !important;
+    padding: 6mm !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+  }
+
+  /* Tables */
+  body.print-notice .table-wrap{ box-shadow:none !important; border-color:#ddd !important; background:#fff !important; }
+
+  /* Watermark stays visible but subtle */
+  body.print-notice.print-draft #notice-preview::before{ opacity: .08 !important; }
+
+  /* =========================
+     RECEIPT PRINT (Voucher)
+     ========================= */
+  body.print-receipt *{ visibility:hidden !important; }
+  body.print-receipt #printable-receipt,
+  body.print-receipt #printable-receipt *{ visibility:visible !important; }
+
+  body.print-receipt #printable-receipt{
+    position: fixed !important;
+    inset: 0 !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    padding: 12mm !important;
+    background: #fff !important;
+    color:#111 !important;
+    border: 4px solid #111 !important;
+    border-radius: 0 !important;
+  }
 }
 
 /* ---------- Dark Mode Utility Overrides (Tailwind-friendly) ---------- */
@@ -824,3 +1178,73 @@ body.dark-mode .shadow,
 body.dark-mode .shadow-sm,
 body.dark-mode .shadow-md,
 body.dark-mode .shadow-lg{ box-shadow: 0 14px 34px rgba(0,0,0,.32) !important; }
+
+
+/* ---------- Properties Toolbar Layout Tweaks (UIV16) ---------- */
+#properties-view .ui-toolbar-row2{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-items:center;
+  width: 100%;
+}
+#properties-view .ui-toolbar-row2 .ui-sort-pill{
+  width: 100%;
+}
+#properties-view .ui-toolbar-row2 .ui-sort-pill .ui-label{
+  white-space: nowrap;
+}
+#properties-view .ui-toolbar-row2 .ui-sort-pill select{
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+@media (max-width: 900px){
+  #properties-view .ui-toolbar-row2{ grid-template-columns: 1fr; }
+}
+
+
+/* ---------- Unified Modal Template (UIV20) ---------- */
+/* الهدف: توحيد سلوك المودال (Scroll + محاذاة) بدون تغيير الـ IDs أو منطق الجافاسكريبت */
+.app-modal{
+  /* يُضاف class app-modal ديناميكياً عبر ui_unified.js */
+  overflow: auto;
+  align-items: flex-start !important;
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
+}
+.app-modal .modal-content{
+  /* لا نغير الـ max-width الموجود في HTML (max-w-*) */
+  margin: 0 auto !important;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.app-modal .modal-content > form{
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+/* بعض المودالات تستخدم حاوية داخلية بدل form */
+.app-modal .modal-content > .p-6,
+.app-modal .modal-content > .p-4{
+  flex: 1 1 auto;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* افتراضياً: حافظ على أزرار الإجراءات ظاهرة في الأسفل إن وُجدت .modal-actions */
+.app-modal .modal-content .modal-actions{
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  margin-top: 12px;
+  background: rgba(255,255,255,.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(2,6,23,.08);
+}
+body.dark-mode .app-modal .modal-content .modal-actions{
+  background: rgba(17,24,39,.72);
+  border-top-color: rgba(255,255,255,.10);
+}

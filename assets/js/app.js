@@ -64,16 +64,27 @@
     return Number.isFinite(n) ? n : 0;
   }
 
-  function sumLeasePaidForUnit(contractNo, propId, unitId){
+  function sumLeasePaidForUnit(contractNo, propId, unitId, groupKey){
     const cn = String(contractNo||'');
-    return (leaseAllocations||[]).filter(a=>String(a.contractNo||'')===cn && String(a.propId||'')===String(propId||'') && String(a.unitId||'')===String(unitId||''))
-      .reduce((s,a)=>s + (Number(a.amount)||0), 0);
+    const gk = String(groupKey||'');
+    return (leaseAllocations||[]).filter(a=>{
+      const ap = String(a.propId||'');
+      const au = String(a.unitId||'');
+      if(String(propId||'')!==ap || String(unitId||'')!==au) return false;
+      if(cn) return String(a.contractNo||'')===cn;
+      if(gk) return String(a.groupKey||'')===gk;
+      return true;
+    }).reduce((s,a)=>s + (Number(a.amount)||0), 0);
   }
 
-  function sumLeasePaidForContract(contractNo){
+  function sumLeasePaidForContract(contractNo, groupKey){
     const cn = String(contractNo||'');
-    return (leaseAllocations||[]).filter(a=>String(a.contractNo||'')===cn)
-      .reduce((s,a)=>s + (Number(a.amount)||0), 0);
+    const gk = String(groupKey||'');
+    return (leaseAllocations||[]).filter(a=>{
+      if(cn) return String(a.contractNo||'')===cn;
+      if(gk) return String(a.groupKey||'')===gk;
+      return false;
+    }).reduce((s,a)=>s + (Number(a.amount)||0), 0);
   }
 
 
@@ -353,34 +364,9 @@
   function archiveUnitLease(u, reason, statusOverride){
     if(!u) return false;
     if(!unitHasLeaseData(u)) return false;
-    
-      const _leaseTenant = normalizeText(normalizeDigits(document.getElementById('lease-tenant').value||''));
-      const _leaseContractNo = normalizeText(normalizeDigits(document.getElementById('lease-contractNo').value||''), {collapseSpaces:false});
-      const _leaseStart = (document.getElementById('lease-start').value||'').trim();
-      const _leaseEnd = (document.getElementById('lease-end').value||'').trim();
-      const _leaseStatus = (document.getElementById('lease-status').value||'').trim();
-      const _leaseRent = parseMoney(document.getElementById('lease-rent').value||0);
 
-      if(_leaseStatus === 'مؤجرة'){
-        if(!_leaseTenant){ uiToast('error','الرجاء إدخال اسم المستأجر.'); return; }
-        if(_leaseRent <= 0){ uiToast('error','الرجاء إدخال قيمة إيجار صحيحة.'); return; }
-      }
-      if(!isDateOrderOk(_leaseStart, _leaseEnd)){
-        uiToast('error','تاريخ بداية العقد يجب أن يكون قبل/يساوي تاريخ النهاية.');
-        return;
-      }
-      if(_leaseContractNo){
-        const hits = findUnitsByContractNo(_leaseContractNo).filter(h => !(String(h.propId)===String(pid) && String(h.unitId)===String(uid)));
-        if(hits.length){
-          const sameTenant = hits.every(h => normalizeText(h.tenant||'') === _leaseTenant);
-          const msg = sameTenant
-            ? 'رقم العقد مستخدم في وحدات أخرى لنفس المستأجر. إذا كان عقدًا متعدد الوحدات يفضل إنشاؤه من (إضافة عقد). هل تريد المتابعة؟'
-            : 'رقم العقد مستخدم في وحدات أخرى. هل تريد المتابعة رغم ذلك؟';
-          if(!confirm(msg)) return;
-        }
-      }
-
-ensureLeaseHistory(u);
+    // Archive current unit lease as-is (must NOT depend on modal DOM inputs)
+    ensureLeaseHistory(u);
 
     const entry = {
       tenant: u.tenant || '',
@@ -3063,7 +3049,18 @@ else if(template === 'arrearsRenew'){
       ${bilingual ? `<div class="letter-title-en" dir="ltr">${escHtml(titleEn || '')}</div>` : ''}
     `;
 
-    const metaHtml = `
+    const metaHtml = bilingual ? `
+      <div class="letter-meta-col" dir="rtl">
+        <div><b>رقم الخطاب:</b> ${escHtml(refNo || '—')}</div>
+        <div><b>التاريخ:</b> ${escHtml(dateDMY || '')}</div>
+        ${subject ? `<div><b>الموضوع:</b> ${escHtml(subject)}</div>` : ''}
+      </div>
+      <div class="letter-meta-col" dir="ltr">
+        <div><b>Letter No.:</b> ${escHtml(refNo || '—')}</div>
+        <div><b>Date:</b> ${escHtml(dateDMY || '')}</div>
+        ${subject ? `<div><b>Subject:</b> ${escHtml(subject)}</div>` : ''}
+      </div>
+    ` : `
       <div><b>رقم الخطاب:</b> ${escHtml(refNo || '—')}</div>
       <div><b>التاريخ:</b> ${escHtml(dateDMY || '')}</div>
       ${subject ? `<div style="flex-basis:100%"><b>الموضوع:</b> ${escHtml(subject)}</div>` : ''}
@@ -3081,7 +3078,7 @@ else if(template === 'arrearsRenew'){
       <div id="notice-body-ar" class="letter-body letter-edit" dir="rtl" contenteditable="true">${textToHtml(bodyAr)}</div>
     `;
 preview.innerHTML = `
-      <div class="letter-paper" id="notice-letter">
+      <div class="letter-paper ${bilingual?'letter-bilingual':''}" id="notice-letter">
         <div class="letter-head">
           <div class="letter-head-lines">${headerLinesHtml}</div>
         </div>
@@ -3210,7 +3207,7 @@ function renderNoticeLog(){
         <td class="py-2 pe-2">${safeType}</td>
         <td class="py-2 pe-2 ${stClass} font-semibold">${st}</td>
         <td class="py-2 text-end whitespace-nowrap">
-          <button data-idx="${i}" class="notice-log-view text-xs bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 px-2 py-1 rounded">عرض</button>
+          <button data-idx="${i}" class="notice-log-view btn-ui btn-ui-sm btn-secondary">عرض</button>
           <button data-idx="${i}" class="btn-ui btn-filter" ${canReprint?'':'disabled'}>إعادة طباعة</button>
           <button data-idx="${i}" class="btn-ui btn-danger" ${e.status==='VOID'?'disabled':''}>إبطال</button>
         </td>
@@ -3289,6 +3286,29 @@ function renderNoticeLog(){
   });
 }
 
+
+
+function setPrintContext(mode){
+  try{
+    document.body.classList.remove('print-notice','print-receipt','print-report');
+    if(mode==='notice') document.body.classList.add('print-notice');
+    else if(mode==='receipt') document.body.classList.add('print-receipt');
+    else if(mode==='report') document.body.classList.add('print-report');
+  }catch(e){}
+}
+function clearPrintContext(){
+  try{ document.body.classList.remove('print-notice','print-receipt','print-report'); }catch(e){}
+}
+
+function markDraftPrint(isDraft){
+  const on = !!isDraft;
+  try{
+    document.body.classList.toggle('print-draft', on);
+    const pv = document.getElementById('notice-preview');
+    if(pv) pv.classList.toggle('print-draft', on);
+  }catch(e){}
+}
+
 function printNoticeDraft(){
   if(!noticePreviewReady){
     uiToast('info', 'الرجاء إنشاء المعاينة أولاً.');
@@ -3300,10 +3320,12 @@ function printNoticeDraft(){
   if(refEl){
     refEl.value = 'DRAFT';
   }
+  setPrintContext('notice');
   markDraftPrint(true);
   window.print();
   setTimeout(()=>{
     markDraftPrint(false);
+    clearPrintContext();
     if(refEl) refEl.value = originalRef;
   }, 50);
 }
@@ -3330,11 +3352,13 @@ if(!confirm('هل تريد اعتماد هذا الإنذار رسميًا وح�
   addNoticeLogEntry(collectNoticeLogEntry(ref));
   renderNoticeLog();
 
+  setPrintContext('notice');
   markDraftPrint(false);
   window.print();
 
   // بعد إغلاق نافذة الطباعة: جهّز رقم جديد للخطاب القادم
   setTimeout(() => {
+    clearPrintContext();
     if(refEl){
       refEl.value = getNextAvailableNoticeNo();
     }
@@ -3697,9 +3721,9 @@ return `
             </td>
             <td class="px-4 py-3">
               <div class="flex gap-1">
-                <button onclick="openUnitModal('${p.id}','${u.id}')" class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded transition-colors" title="تعديل">✏️</button>
-                <button onclick="openLeaseModal('${p.id}','${u.id}')" class="px-2 py-1 text-xs bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded transition-colors" title="إدارة العقد">📄</button>
-                <button onclick="deleteUnit('${p.id}','${u.id}')" class="px-2 py-1 text-xs bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 rounded transition-colors" title="حذف">🗑️</button>
+                <button onclick="openUnitModal('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="تعديل">✏️</button>
+                <button onclick="openLeaseModal('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-filter" title="إدارة العقد">📄</button>
+                <button onclick="deleteUnit('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
               </div>
             </td>
           </tr>
@@ -3727,29 +3751,30 @@ return `
           </div>
           <div class="flex gap-2" onclick="event.stopPropagation()">
             <button onclick="openUnitModal('${escJsStr(p.id)}')" class="btn-ui btn-success">+ وحدة</button>
+            <button onclick="openPropertyModal('${escJsStr(p.id)}')" class="btn-ui btn-secondary">تعديل</button>
             <button onclick="deleteProperty('${escJsStr(p.id)}')" class="btn-ui btn-danger">حذف</button>
           </div>
         </div>
 
         <div id="${contentId}" class="p-4 hidden">
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead class="bg-gray-50 dark:bg-dark-bg text-xs text-gray-500 dark:text-gray-400 uppercase">
+          <div class="table-wrap">
+            <table class="ui-table w-full text-right">
+              <thead>
                 <tr>
-                  <th class="px-4 py-2">رقم الوحدة</th><th class="px-4 py-2">اسم الوحدة</th>
-                  <th class="px-4 py-2">عداد الكهرباء</th>
-                  <th class="px-4 py-2">عداد المياه</th>
-                  <th class="px-4 py-2">معرف العقار (طاقة)</th>
-                  <th class="px-4 py-2">النوع</th>
-                  <th class="px-4 py-2">الحالة</th>
-                  <th class="px-4 py-2">المستأجر</th>
-                  <th class="px-4 py-2">القيمة</th>
-                  <th class="px-4 py-2">العقد</th>
-                  <th class="px-4 py-2">التواريخ</th>
-                  <th class="px-4 py-2">تحكم</th>
+                  <th>رقم الوحدة</th><th>اسم الوحدة</th>
+                  <th>عداد الكهرباء</th>
+                  <th>عداد المياه</th>
+                  <th>معرف العقار (طاقة)</th>
+                  <th>النوع</th>
+                  <th>الحالة</th>
+                  <th>المستأجر</th>
+                  <th>القيمة</th>
+                  <th>العقد</th>
+                  <th>التواريخ</th>
+                  <th>تحكم</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+              <tbody>
                 ${rowsHTML}
               </tbody>
             </table>
@@ -4402,11 +4427,12 @@ let allLeases = [];
     // Group leases by contractGroupId (multi-unit) — otherwise each unit is its own group
     const groupsMap = new Map();
     allLeases.forEach(u=>{
-      const key = u.contractGroupId || (u.contractNo ? `CN-${u.contractNo}` : `U-${u.propId}-${u.id}`);
+      const cg = u.contractGroupId || (u.leaseExtra && u.leaseExtra.contractGroupId) || '';
+      const key = cg || (u.contractNo ? `CN-${u.contractNo}` : `U-${u.propId}-${u.id}`);
       if(!groupsMap.has(key)){
         groupsMap.set(key, {
           groupKey: key,
-          contractGroupId: u.contractGroupId || '',
+          contractGroupId: cg || '',
           contractNo: u.contractNo || '',
           tenant: u.tenant || '',
           start: u.start || '',
@@ -4514,7 +4540,7 @@ let allLeases = [];
                         data-lease-action="toggle"
                         data-groupkey="${g.groupKey}"
                         onclick="toggleLeaseGroupRow('${escJsStr(g.groupKey)}')"
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-sm font-bold">تفاصيل</button>
+                        class="btn-ui btn-ui-sm btn-secondary">تفاصيل</button>
                 <button type="button"
                         data-lease-action="pay"
                         data-groupkey="${g.groupKey}"
@@ -4523,7 +4549,7 @@ let allLeases = [];
               </div>`
             : `<button type="button"
                        onclick="openLeaseModal('${escJsStr(g.units?.[0]?.propId || g.propId)}','${escJsStr(g.units?.[0]?.id || g.id)}')"
-                       class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-sm font-bold">إدارة</button>`
+                       class="btn-ui btn-ui-sm btn-secondary">إدارة</button>`
           }
         </td>
 
@@ -4548,17 +4574,17 @@ if(isMulti){
               <div class="flex items-center justify-between gap-3 mb-3">
                 <div class="flex items-center gap-2">
                 <div class="text-sm font-extrabold text-gray-800 dark:text-white">تفاصيل الوحدات ضمن العقد</div>
-                  <button onclick="openLeasePaymentModal('${escJsStr(g.groupKey)}')" class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-emerald-600 text-white hover:bg-emerald-700">تسجيل دفعة</button>
+                  <button onclick="openLeasePaymentModal('${escJsStr(g.groupKey)}')" class="btn-ui btn-ui-sm btn-success">تسجيل دفعة</button>
                 </div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-3">
                   <span>الإجمالي: <span class="font-mono text-emerald-600 dark:text-emerald-400">${formatAED(g.rent)}</span></span>
-                  <span>المدفوع: <span class="font-mono text-emerald-700 dark:text-emerald-400">${formatAED(sumLeasePaidForContract(g.contractNo))}</span></span>
-                  <span>المتبقي: <span class="font-mono text-red-600 dark:text-red-300">${formatAED(Math.max(0, (Number(g.rent)||0) - sumLeasePaidForContract(g.contractNo)))}</span></span>
+                  <span>المدفوع: <span class="font-mono text-emerald-700 dark:text-emerald-400">${formatAED(sumLeasePaidForContract(g.contractNo, g.groupKey))}</span></span>
+                  <span>المتبقي: <span class="font-mono text-red-600 dark:text-red-300">${formatAED(Math.max(0, (Number(g.rent)||0) - sumLeasePaidForContract(g.contractNo, g.groupKey)))}</span></span>
                 </div>
               </div>
 
               <div class="overflow-x-auto">
-                <table class="min-w-full text-right text-sm">
+                <table class="ui-table min-w-full text-right text-sm">
                   <thead>
                     <tr class="text-xs text-gray-500 dark:text-gray-400">
                       <th class="py-2 px-2">الوحدة</th>
@@ -4583,13 +4609,13 @@ if(isMulti){
                           </td>
                           <td class="py-2 px-2 text-xs text-gray-600 dark:text-gray-300">${u.propName||''}</td>
                           <td class="py-2 px-2 font-mono text-emerald-600 dark:text-emerald-400">${formatAED(u.rent)}</td>
-                          <td class="py-2 px-2 font-mono text-gray-700 dark:text-gray-200">${formatAED(sumLeasePaidForUnit(g.contractNo, u.propId, u.id))}</td>
-                          <td class="py-2 px-2 font-mono text-red-600 dark:text-red-300">${formatAED(Math.max(0, (Number(u.rent)||0) - sumLeasePaidForUnit(g.contractNo, u.propId, u.id)))}</td>
+                          <td class="py-2 px-2 font-mono text-gray-700 dark:text-gray-200">${formatAED(sumLeasePaidForUnit(g.contractNo, u.propId, u.id, g.groupKey))}</td>
+                          <td class="py-2 px-2 font-mono text-red-600 dark:text-red-300">${formatAED(Math.max(0, (Number(u.rent)||0) - sumLeasePaidForUnit(g.contractNo, u.propId, u.id, g.groupKey)))}</td>
                           <td class="py-2 px-2 text-xs">${u.start||'-'}</td>
                           <td class="py-2 px-2 text-xs">${u.end||'-'}</td>
                           <td class="py-2 px-2"><span class="${leaseContractBadgeClass(stt)}">${stt}</span></td>
                           <td class="py-2 px-2">
-                            <button onclick="openLeaseModal('${escJsStr(u.propId)}','${escJsStr(u.id)}')" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 text-xs font-bold">إدارة</button>
+                            <button onclick="openLeaseModal('${escJsStr(u.propId)}','${escJsStr(u.id)}')" class="btn-ui btn-ui-sm btn-secondary">إدارة</button>
                           </td>
                         </tr>
                       `;
@@ -4608,34 +4634,135 @@ if(isMulti){
     renderPagerUI('leases', document.getElementById('leases-pager'), pg);
 }
 
-  function openPropertyModal(){ document.getElementById('property-modal').classList.remove('hidden'); }
-  function closePropertyModal(){ document.getElementById('property-modal').classList.add('hidden'); }
+  function openPropertyModal(pid){
+    const modal = document.getElementById('property-modal');
+    const form = document.getElementById('property-form');
+    const titleEl = document.getElementById('property-modal-title');
+    const idInput = document.getElementById('prop-id');
+
+    // reset defaults
+    if(form) form.reset();
+    if(form) delete form.dataset.editPid;
+    if(idInput){
+      idInput.readOnly = false;
+      idInput.classList.remove('opacity-70');
+    }
+    if(titleEl) titleEl.textContent = 'إضافة عقار جديد';
+
+    // edit mode
+    if(pid){
+      const p = properties.find(x => x.id === pid);
+      if(p){
+        if(titleEl) titleEl.textContent = 'تعديل بيانات العقار';
+        if(form) form.dataset.editPid = pid;
+
+        document.getElementById('prop-id').value = p.id || '';
+        document.getElementById('prop-name').value = p.name || '';
+        document.getElementById('prop-type').value = p.type || '';
+        document.getElementById('prop-usage').value = p.usage || '';
+        document.getElementById('prop-location').value = p.location || '';
+
+        // prevent accidental id changes (id is key)
+        if(idInput){
+          idInput.readOnly = true;
+          idInput.classList.add('opacity-70');
+        }
+      }
+    }
+
+    modal.classList.remove('hidden');
+  }
+  function closePropertyModal(){
+    const modal = document.getElementById('property-modal');
+    const form = document.getElementById('property-form');
+    const titleEl = document.getElementById('property-modal-title');
+    const idInput = document.getElementById('prop-id');
+
+    modal.classList.add('hidden');
+
+    // reset edit mode
+    if(form){
+      delete form.dataset.editPid;
+      form.reset();
+    }
+    if(idInput){
+      idInput.readOnly = false;
+      idInput.classList.remove('opacity-70');
+    }
+    if(titleEl) titleEl.textContent = 'إضافة عقار جديد';
+  }
 
   document.getElementById('property-form').addEventListener('submit', e=>{
     e.preventDefault();
 
-      const pid = normalizeText(document.getElementById('prop-id').value, {collapseSpaces:false});
-      const pname = normalizeText(document.getElementById('prop-name').value);
-      if(!pname){ uiToast('error','الرجاء إدخال اسم العقار.'); return; }
-    properties.push({
+    const form = document.getElementById('property-form');
+    const editPid = (form && form.dataset && form.dataset.editPid) ? form.dataset.editPid : '';
+
+    const pid = normalizeText(document.getElementById('prop-id').value, {collapseSpaces:false});
+    const pname = normalizeText(document.getElementById('prop-name').value);
+
+    if(!pid){
+      uiToast('error','الرجاء إدخال رمز العقار.');
+      return;
+    }
+    if(!pname){
+      uiToast('error','الرجاء إدخال اسم العقار.');
+      return;
+    }
+
+    const payload = {
       id: pid,
       name: pname,
       type: normalizeText(document.getElementById('prop-type').value, {collapseSpaces:false}),
       usage: normalizeText(document.getElementById('prop-usage').value, {collapseSpaces:false}),
-      location: normalizeText(document.getElementById('prop-location').value),
+      location: normalizeText(document.getElementById('prop-location').value)
+    };
+
+    if(editPid){
+      const p = properties.find(x=>x.id===editPid);
+      if(!p){
+        uiToast('error','تعذر العثور على العقار المطلوب للتعديل.');
+        return;
+      }
+      // id لا يتغير في وضع التعديل
+      p.name = payload.name;
+      p.type = payload.type;
+      p.usage = payload.usage;
+      p.location = payload.location;
+
+      saveToLocal();
+      closePropertyModal();
+      renderProperties();
+      updateDashboard();
+      logAction('تم تحديث بيانات العقار');
+      uiToast('success','تم تحديث بيانات العقار بنجاح');
+      return;
+    }
+
+    // add mode
+    if(properties.some(x=>x.id===payload.id)){
+      uiToast('error','رمز العقار موجود مسبقاً. اختر رمزًا مختلفًا.');
+      return;
+    }
+
+    properties.push({
+      ...payload,
       units: []
     });
+
     saveToLocal();
     closePropertyModal();
     renderProperties();
     updateDashboard();
     logAction('تمت إضافة عقار جديد');
+    uiToast('success','تمت إضافة العقار بنجاح');
   });
 
   function openUnitModal(propId, unitId){
     const m = document.getElementById('unit-modal');
     m.classList.remove('hidden');
-    m.style.display = 'block';
+    // Ensure no inline display overrides (Tailwind .hidden relies on display:none)
+    m.style.display = '';
     document.getElementById('unit-prop-id').value = propId;
     // معرف العقار (طاقة) يتم إدخاله يدوياً لاحقاً — لا يتم تعبئته تلقائياً
     if(document.getElementById('unit-property-id')) document.getElementById('unit-property-id').value = '';
@@ -4695,7 +4822,11 @@ if(isMulti){
   
 
   function closeUnitModal(){
-    document.getElementById('unit-modal').classList.add('hidden');
+    const m = document.getElementById('unit-modal');
+    if(!m) return;
+    m.classList.add('hidden');
+    // Clear/override any inline display that could keep the modal visible
+    m.style.display = 'none';
   }
 
   document.getElementById('unit-form').addEventListener('submit', e=>{
@@ -4799,6 +4930,8 @@ const newUnit = {
       newUnit.contractNo = '';
       newUnit.start = '';
       newUnit.end = '';
+      newUnit.contractGroupId = '';
+      if(newUnit.leaseExtra) delete newUnit.leaseExtra.contractGroupId;
     } else if(existingUnit && Array.isArray(existingUnit.leaseHistory)){
       // حافظ على السجل عند التعديل
       newUnit.leaseHistory = existingUnit.leaseHistory;
@@ -4820,7 +4953,8 @@ if(uid){
   function openAddLeaseModal(){
     const m = document.getElementById('add-lease-modal');
     m.classList.remove('hidden');
-    m.style.display = 'block';
+    // Ensure no inline display overrides (Tailwind .hidden relies on display:none)
+    m.style.display = '';
     const propSelect = document.getElementById('add-lease-prop');
     propSelect.innerHTML = '<option value="">اختر العقار...</option>';
     properties.forEach(p => {
@@ -4832,7 +4966,10 @@ if(uid){
   }
 
   function closeAddLeaseModal(){
-    document.getElementById('add-lease-modal').classList.add('hidden');
+    const m = document.getElementById('add-lease-modal');
+    if(!m) return;
+    m.classList.add('hidden');
+    m.style.display = 'none';
   }
 
   // ===== Multi-unit contract builder (Add Lease) =====
@@ -4916,13 +5053,13 @@ if(uid){
       tbody.innerHTML += `
         <tr class="border-b border-gray-100 dark:border-gray-800">
           <td class="py-2 px-2">
-            <select class="w-full border p-2 rounded" onchange="onAddLeaseUnitChanged(${idx}, this.value)">${options}</select>
+            <select class="ui-field ui-select w-full" onchange="onAddLeaseUnitChanged(${idx}, this.value)">${options}</select>
           </td>
           <td class="py-2 px-2">
-            <input type="number" min="0" class="w-full border p-2 rounded" value="${rentVal}" oninput="onAddLeaseUnitRent(${idx}, this.value)" placeholder="0">
+            <input type="number" min="0" class="ui-field w-full" value="${rentVal}" oninput="onAddLeaseUnitRent(${idx}, this.value)" placeholder="0">
           </td>
           <td class="py-2 px-2 text-center">
-            <button type="button" class="text-rose-600 hover:text-rose-800 font-bold" onclick="removeLeaseUnitRow(${idx})">✕</button>
+            <button type="button" class="btn-ui btn-icon btn-reset btn-ui-sm" onclick="removeLeaseUnitRow(${idx})" aria-label="حذف">✕</button>
           </td>
         </tr>
       `;
@@ -5053,6 +5190,7 @@ if(uid){
       unit.end = end;
 
       // Shared metadata to help grouping later
+      unit.contractGroupId = contractGroupId;
       unit.leaseExtra = Object.assign({}, unit.leaseExtra || {}, extra, {
         contractGroupId,
         contractUnitsCount: rows.length,
@@ -5121,7 +5259,7 @@ const wrap = document.createElement('div');
             <div class="mt-3 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div class="bg-gray-50 dark:bg-gray-800 px-3 py-2 text-sm font-extrabold text-gray-700 dark:text-gray-200">توزيع الدفعة على الوحدات</div>
               <div class="overflow-x-auto">
-                <table class="min-w-full text-right text-sm">
+                <table class="ui-table min-w-full text-right text-sm">
                   <thead class="bg-white dark:bg-dark-surface">
                     <tr class="text-xs text-gray-500 dark:text-gray-400">
                       <th class="py-2 px-2">الوحدة</th>
@@ -5180,7 +5318,8 @@ const wrap = document.createElement('div');
     const allUnits = getAllActiveLeasesUnits();
     const map = new Map();
     allUnits.forEach(u=>{
-      const key = u.contractGroupId || (u.contractNo ? `CN-${u.contractNo}` : `U-${u.propId}-${u.id}`);
+      const cg = u.contractGroupId || (u.leaseExtra && u.leaseExtra.contractGroupId) || '';
+      const key = cg || (u.contractNo ? `CN-${u.contractNo}` : `U-${u.propId}-${u.id}`);
       if(!map.has(key)){
         map.set(key, { groupKey:key, contractNo:u.contractNo||'', tenant:u.tenant||'', units:[], rent:0 });
       }
@@ -5228,62 +5367,68 @@ const wrap = document.createElement('div');
   function openLeasePaymentModal(groupKey){
     const m = ensureLeasePaymentModal();
     m.classList.remove('hidden');
+    m.style.display = '';
 
     const g = getLeaseGroupByKey(groupKey);
-    m.dataset.groupKey = groupKey;
+    m.dataset.groupKey = String(groupKey||'');
+
+    const tb = document.getElementById('lease-pay-units-body');
+    if(!tb) return;
+
+    // Reset form fields
+    const today = new Date();
+    const dt = document.getElementById('lease-pay-date');
+    if(dt) dt.value = today.toISOString().slice(0,10);
+    const totalEl = document.getElementById('lease-pay-total');
+    if(totalEl) totalEl.value = '';
+    const methodEl = document.getElementById('lease-pay-method');
+    if(methodEl) methodEl.value = 'تحويل';
+    const refEl = document.getElementById('lease-pay-ref');
+    if(refEl) refEl.value = '';
+
+    tb.innerHTML = '';
 
     if(!g){
-      document.getElementById('lease-pay-title').textContent = 'تسجيل دفعة — (تعذر تحديد العقد)';
-      const tb = document.getElementById('lease-pay-units-body');
-      if(tb) tb.innerHTML = '<tr><td colspan="5" class="py-4 px-3 text-center text-sm text-red-600 dark:text-red-300 font-bold">لا يمكن تحديد وحدات العقد. تأكد من وجود رقم عقد للوحدات.</td></tr>';
-      tb.appendChild(frag);
+      const title = document.getElementById('lease-pay-title');
+      if(title) title.textContent = 'تسجيل دفعة — (تعذر تحديد العقد)';
+      tb.innerHTML = `<tr><td colspan="4" class="py-3 text-center text-gray-500">لا يمكن تحديد العقد/الوحدات لهذا السجل.</td></tr>`;
       updateLeasePaySum();
       return;
     }
 
-    m.classList.remove('hidden');
-    m.dataset.groupKey = groupKey;
-    m.dataset.contractNo = (g.contractNo!=null) ? String(g.contractNo) : '';
-    document.getElementById('lease-pay-title').textContent = `تسجيل دفعة للعقد: ${g.contractNo || ''} — ${escHtml(g.tenant || '')}`;
+    // Store contractNo for legacy filtering, but always rely on groupKey for multi-unit distribution
+    m.dataset.contractNo = String(g.contractNo || '');
 
-    const today = new Date();
-    document.getElementById('lease-pay-date').value = today.toISOString().slice(0,10);
-    document.getElementById('lease-pay-total').value = '';
-    document.getElementById('lease-pay-method').value = 'تحويل';
-    document.getElementById('lease-pay-ref').value = '';
+    const title = document.getElementById('lease-pay-title');
+    if(title) title.textContent = `تسجيل دفعة للعقد: ${g.contractNo || ''} — ${escHtml(g.tenant || '')}`;
 
-    const tb = document.getElementById('lease-pay-units-body');
-    tb.innerHTML = '';
+    if(!g.units || !g.units.length){
+      tb.innerHTML = `<tr><td colspan="4" class="py-3 text-center text-gray-500">لا توجد وحدات ضمن هذا العقد.</td></tr>`;
+      updateLeasePaySum();
+      return;
+    }
+
     const frag = document.createDocumentFragment();
-(g.units||[]).forEach(u=>{
-      const paid = sumLeasePaidForUnit(g.contractNo, u.propId, u.id);
-      const rent = Number(u.rent)||0;
-      const remain = Math.max(0, rent - paid);
-
+    (g.units||[]).forEach(u=>{
+      const paid = sumLeasePaidForUnit(g.contractNo, u.propId, u.id, g.groupKey);
+      const remain = Math.max(0, (Number(u.rent)||0) - paid);
       const tr = document.createElement('tr');
-      tr.className = 'border-t border-gray-100 dark:border-gray-800';
       tr.innerHTML = `
-        <td class="py-2 px-2">
-          <div class="font-bold text-gray-800 dark:text-white">${escHtml(u.name||'—')}</div>
-          <div class="text-xs font-mono text-gray-500 dark:text-gray-400">${u.id||''}</div>
-        </td>
-        <td class="py-2 px-2 font-mono text-emerald-600 dark:text-emerald-400">${formatAED(rent)}</td>
-        <td class="py-2 px-2 font-mono text-gray-700 dark:text-gray-200">${formatAED(paid)}</td>
-        <td class="py-2 px-2 font-mono text-red-600 dark:text-red-300">${formatAED(remain)}</td>
-        <td class="py-2 px-2">
-          <input class="lease-alloc-input w-40 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-surface font-mono"
-                 type="text" placeholder="0" value=""
-                 data-prop="${u.propId}" data-unit="${u.id}" data-unitname="${escHtml(u.name||'')}" data-rent="${rent}"
-                 oninput="updateLeasePaySum()" />
+        <td class="py-2 px-2 text-right">${escHtml(u.propName||'')}</td>
+        <td class="py-2 px-2 text-right">${escHtml(u.name||'')}</td>
+        <td class="py-2 px-2 text-center"><span class="font-mono">${formatAED(remain)}</span></td>
+        <td class="py-2 px-2 text-center">
+          <input class="lease-alloc-input ui-field" type="number" min="0" step="0.01" data-unit-id="${escHtml(u.id)}" data-prop-id="${escHtml(u.propId)}" value="0" oninput="updateLeasePaySum()">
         </td>
       `;
       frag.appendChild(tr);
     });
 
+    tb.appendChild(frag);
     updateLeasePaySum();
   }
 
-  function updateLeasePaySum(){
+function updateLeasePaySum(){
     const total = parseAED(document.getElementById('lease-pay-total')?.value);
     let sum = 0;
     document.querySelectorAll('.lease-alloc-input').forEach(inp=>{
@@ -5314,7 +5459,7 @@ const wrap = document.createElement('div');
     const rows = [];
     let sumRemain = 0;
     (g.units||[]).forEach(u=>{
-      const paid = sumLeasePaidForUnit(contractNo, u.propId, u.id);
+      const paid = sumLeasePaidForUnit(contractNo, u.propId, u.id, groupKey);
       const rent = Number(u.rent)||0;
       const remain = Math.max(0, rent - paid);
       sumRemain += remain;
@@ -5539,9 +5684,36 @@ function openLeaseModal(pid, uid){
     const p = properties.find(x=>x.id===pid);
     const u = p.units.find(x=>x.id===uid);
 
-    
+    // Collect + validate (was causing ReferenceError when values were out of scope)
+    const _leaseTenant = normalizeText(normalizeDigits(document.getElementById('lease-tenant')?.value || ''));
+    const _leaseContractNo = normalizeText(normalizeDigits(document.getElementById('lease-contractNo')?.value || ''), {collapseSpaces:false});
+    const _leaseStart = (document.getElementById('lease-start')?.value || '').trim();
+    const _leaseEnd = (document.getElementById('lease-end')?.value || '').trim();
+    const _leaseStatus = (document.getElementById('lease-status')?.value || '').trim();
+    const _leaseRent = parseMoney(document.getElementById('lease-rent')?.value || 0);
+
+    if(_leaseStatus === 'مؤجرة'){
+      if(!_leaseTenant){ uiToast('error','الرجاء إدخال اسم المستأجر.'); return; }
+      if(_leaseRent <= 0){ uiToast('error','الرجاء إدخال قيمة إيجار صحيحة.'); return; }
+    }
+    if(!isDateOrderOk(_leaseStart, _leaseEnd)){
+      uiToast('error','تاريخ بداية العقد يجب أن يكون قبل/يساوي تاريخ النهاية.');
+      return;
+    }
+    if(_leaseContractNo){
+      const hits = findUnitsByContractNo(_leaseContractNo)
+        .filter(h => !(String(h.propId)===String(pid) && String(h.unitId)===String(uid)));
+      if(hits.length){
+        const sameTenant = hits.every(h => normalizeText(h.tenant||'') === _leaseTenant);
+        const msg = sameTenant
+          ? 'رقم العقد مستخدم في وحدات أخرى لنفس المستأجر. إذا كان عقدًا متعدد الوحدات يفضل إنشاؤه من (إضافة عقد). هل تريد المتابعة؟'
+          : 'رقم العقد مستخدم في وحدات أخرى. هل تريد المتابعة رغم ذلك؟';
+        if(!confirm(msg)) return;
+      }
+    }
+
     ensureLeaseHistory(u);
-u.tenant = _leaseTenant;
+    u.tenant = _leaseTenant;
     u.rent = _leaseRent;
     u.contractNo = _leaseContractNo;
     u.start = _leaseStart;
@@ -5594,6 +5766,8 @@ u.status='شاغرة';
     u.contractNo='';
     u.start='';
     u.end='';
+    u.contractGroupId='';
+    if(u.leaseExtra) delete u.leaseExtra.contractGroupId;
     saveToLocal();
     closeLeaseModal();
     showView('leases');
@@ -5784,7 +5958,7 @@ const search = (document.getElementById('tenants-search').value||'').toLowerCase
       const td = tr.querySelector('.tenant-actions');
       const btn = document.createElement('button');
       btn.textContent = 'تحديث';
-      btn.className = 'text-blue-600 hover:text-blue-800 border border-blue-200 dark:border-blue-800 px-2 py-1 rounded';
+      btn.className = 'btn-ui btn-ui-sm btn-secondary';
       btn.addEventListener('click', ()=> openTenantModal(t.key, t.name));
       td.appendChild(btn);
 
@@ -6226,7 +6400,7 @@ pg.items.forEach(p=>{
         <td class="font-bold text-emerald-700 dark:text-emerald-400 font-mono">${formatAED(p.amount)}</td>
         <td class="text-xs text-gray-500 dark:text-gray-400 font-mono">${formatAED(p.due)} / <span class="text-rose-500 dark:text-rose-400">${formatAED(p.due-p.amount)}</span></td>
         <td>${p.amount>=p.due ? '<span class="badge badge-green">مكتمل</span>' : '<span class="badge badge-amber">جزئي</span>'}</td>
-        <td><button onclick="previewReceipt('${escJsStr(p.id)}', 'payment')" class="text-purple-600 dark:text-purple-400 hover:underline text-xs">عرض السند</button></td>
+        <td><button onclick="previewReceipt('${escJsStr(p.id)}', 'payment')" class="btn-ui btn-ui-sm btn-secondary">عرض السند</button></td>
       `;
       frag.appendChild(tr);
     });
@@ -6642,14 +6816,14 @@ const st = _chequesState();
         <td class="font-bold">${formatAED(c.value)}</td>
         <td class="text-xs text-gray-500 dark:text-gray-400">${escHtml(c.bank)} - #${escHtml(c.chequeNo)}</td>
         <td>
-          ${c.imageUrl ? `<button onclick="viewChequeImage('${escJsStr(c.imageUrl)}')" class="text-purple-600 dark:text-purple-400 hover:underline text-xs">عرض الصورة</button>` : '-'}
+          ${c.imageUrl ? `<button onclick="viewChequeImage('${escJsStr(c.imageUrl)}')" class="btn-ui btn-ui-sm btn-secondary">عرض الصورة</button>` : '-'}
         </td>
         <td>
           <select onchange="changeChequeStatus('${escHtml(c.id)}', this.value)" class="text-sm border p-1 rounded bg-white dark:bg-gray-800 dark:text-white">
             ${selectOptions}
           </select>
-          <button type="button" onclick="openChequeModal('${escJsStr(c.id)}')" class="text-xs px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 ml-2" title="تعديل الشيك">✏️ تعديل</button>
-          <button onclick="deleteCheque('${escJsStr(c.id)}')" class="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-1 rounded transition ml-2" title="حذف">🗑️</button>
+          <button type="button" onclick="openChequeModal('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-secondary" title="تعديل الشيك">✏️ تعديل</button>
+          <button onclick="deleteCheque('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
         </td>
       `;
       frag.appendChild(tr);
@@ -6909,8 +7083,8 @@ const st = _expensesState();
         <td class="text-sm text-gray-600 dark:text-gray-300">${escHtml(e.details)}</td>
         <td class="text-center">
           <div class="flex items-center justify-center gap-2">
-            <button onclick="previewReceipt('${escHtml(e.id)}', 'expense')" class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-xs font-bold hover:bg-blue-100">🖨️ سند صرف</button>
-            <button onclick="deleteExpenseById('${escHtml(e.id)}')" class="text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 p-1 rounded transition" title="حذف">🗑️</button>
+            <button onclick="previewReceipt('${escHtml(e.id)}', 'expense')" class="btn-ui btn-ui-sm btn-secondary">🖨️ سند صرف</button>
+            <button onclick="deleteExpenseById('${escHtml(e.id)}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
           </div>
         </td>
       `;
@@ -7006,10 +7180,10 @@ const tr = document.createElement('tr');
         <td class="px-4 py-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">${formatAED(s.amount)}</td>
         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">${escHtml(s.notes || '-')}</td>
         <td class="px-4 py-3 text-center">
-          <button onclick="previewReceipt('${escJsStr(s.id)}', 'salary')" class="text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-xs font-bold hover:bg-blue-100">🖨️ سند صرف راتب</button>
+          <button onclick="previewReceipt('${escJsStr(s.id)}', 'salary')" class="btn-ui btn-ui-sm btn-secondary">🖨️ سند صرف راتب</button>
         </td>
         <td class="px-4 py-3 text-center">
-          <button onclick="deleteSalary(${index})" class="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/30 p-1 rounded transition">🗑️</button>
+          <button onclick="deleteSalary(${index})" class="btn-ui btn-ui-sm btn-icon btn-danger">🗑️</button>
         </td>
       `;
       frag.appendChild(tr);
@@ -7370,7 +7544,7 @@ let allVouchers = [];
         <td class="px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 text-right align-top break-words"><div class="cell-2lines font-bold text-gray-700 dark:text-gray-300" dir="auto">${escHtml(v.party)}</div></td>
         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right align-top break-words"><div class="cell-2lines" title="${escHtml(v.desc)}">${escHtml(v.desc)}</div></td>
         <td class="px-4 py-3 text-center whitespace-nowrap align-top">
-          <button onclick="previewReceipt('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="text-purple-600 dark:text-purple-400 hover:underline text-sm">عرض</button>
+          <button onclick="previewReceipt('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="btn-ui btn-ui-sm btn-secondary">عرض</button>
         </td>
       `;
       frag.appendChild(tr);
@@ -7520,7 +7694,31 @@ let allVouchers = [];
           try{ clone.remove(); }catch(_){}
         }
       }, { success: 'تم تحميل ملف PDF ✅', error: 'تعذر إنشاء/تحميل PDF. تحقق من الاتصال بالإنترنت ثم أعد المحاولة.' });
-    }
+    }function printReceipt(){
+  const el = document.getElementById('printable-receipt');
+  if(!el){
+    uiToast('error', 'تعذر العثور على نموذج السند للطباعة.');
+    return;
+  }
+
+  // Ensure we print ONLY the receipt, not notices/reports
+  setPrintContext('receipt');
+
+  const cleanup = ()=>{
+    try{ clearPrintContext(); }catch(e){}
+    window.removeEventListener('afterprint', cleanup);
+  };
+  try{ window.addEventListener('afterprint', cleanup); }catch(e){}
+
+  // Give the browser a tick to apply print styles
+  setTimeout(()=>{
+    window.print();
+    // Fallback cleanup
+    setTimeout(cleanup, 1200);
+  }, 60);
+}
+
+
 
   // ================= REPORTS =================
   
@@ -8362,6 +8560,7 @@ function printCurrentReport(){
   const pEl = document.getElementById('print-header-period');
   if(pEl) pEl.textContent = `تقرير نصف سنوي لصرف الملاك (${hyLbl || '—'})`;
 
+  setPrintContext('report');
   setTimeout(()=>{
     window.print();
     setTimeout(()=>{
@@ -8369,6 +8568,7 @@ function printCurrentReport(){
       if(monthly && !monthlyWasHidden) monthly.classList.remove('hidden');
       if(hy && hyWasHidden) hy.classList.add('hidden');
       if(rv && wasHidden) rv.classList.add('hidden');
+      clearPrintContext();
     }, 400);
   }, 80);
 }
@@ -8802,6 +9002,11 @@ function printCurrentReport(){
         }
         if(!bar || bar === view) return;
 
+        // Do not re-wrap or re-layout our unified toolbars/panels.
+        try{
+          if(bar.closest && (bar.closest('.ui-toolbar') || bar.closest('.ui-toolbar-panel'))) return;
+        }catch(e){}
+
         if(bar.dataset.uiControlsUnified === '1') return;
 
         // Visual container (glass + spacing)
@@ -8969,11 +9174,17 @@ function printCurrentReport(){
     if(!bar) return;
 
     // Make bar look consistent without overriding page theme too much
-    bar.classList.add('glass-card','ui-controls-bar');
+    const isUiToolbar = !!(bar.classList && bar.classList.contains('ui-toolbar'));
+    if(!isUiToolbar){
+      bar.classList.add('glass-card','ui-controls-bar');
+    }
 
     // Find row container inside bar (first flex wrapper)
     let row = bar.querySelector(':scope > .flex, :scope > div > .flex');
     if(!row) row = bar.querySelector('.flex');
+    if(!row && isUiToolbar){
+      row = bar.querySelector('.ui-toolbar-row');
+    }
     if(row) row.classList.add('ui-controls-row');
 
     // Apply search wrap

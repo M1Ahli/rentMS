@@ -15,67 +15,88 @@
 </div>
 </div>
 <!-- Advanced Search & Sort: Receipts History -->
-<div class="glass-card bg-transparent bg-white p-4 rounded-xl mb-4 shadow-sm" id="receipts-advanced-bar"><div class="ui-controls-bar ui-rtl-end ui-advbar"><button class="btn-ui btn-filter ui-ctl-btn" id="receipts-toggle-filters" onclick="toggleReceiptsFiltersPanel()">عرض الفلاتر المتقدمة</button><button class="btn-ui btn-icon ui-ctl-btn" id="receipts-reset-btn" onclick="resetReceiptsAdvanced()" title="إعادة ضبط" type="button">↻</button><span aria-hidden="true" class="ui-ctl-divider"></span><div class="ui-control ui-sort"><div class="flex items-center gap-2 ui-sort-group"><button class="w-12 border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 ui-dir btn-ui btn-icon" data-dir="desc" id="receipts-sort-dir" onclick="toggleReceiptsSortDir()" title="عكس ترتيب فرز السندات">⬇️</button><select class="ui-field ui-select" id="receipts-sort-by" onchange="onReceiptsAdvancedChanged()">
-<option value="date">التاريخ</option>
-<option value="amount">المبلغ</option>
-<option value="type">النوع</option>
-<option value="party">الطرف الآخر</option>
-<option value="source">المصدر</option>
-</select></div></div><div class="ui-control ui-search flex-1"><div class="relative ui-search-wrap">
-<input class="w-full border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-bg text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-purple-500 outline-none ui-field ui-input" id="receipts-search-input" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="بحث: تاريخ، نوع، مبلغ، طرف، بيان..."/>
-<span class="absolute right-3 top-2.5 text-gray-400 text-sm">🔍</span>
-</div></div></div><div class="ui-advbar-meta"><div class="text-xs text-gray-500 dark:text-gray-400" id="receipts-advanced-hint"></div></div><div class="hidden mt-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40" id="receipts-filters-panel">
-<div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">النوع</label>
-<select class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200" id="receipts-filter-type" onchange="onReceiptsAdvancedChanged()">
-<option value="">الكل</option>
-<option value="قبض">قبض</option>
-<option value="صرف">صرف</option>
-</select>
+<div class="ui-toolbar" id="receipts-advanced-bar" aria-label="شريط البحث والفرز">
+  <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
+    <button class="btn-ui btn-filter" id="receipts-toggle-filters" onclick="toggleReceiptsFiltersPanel()" type="button">🧰 الفلاتر المتقدمة</button>
+    <button class="btn-ui btn-reset" id="receipts-reset-btn" onclick="resetReceiptsAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
+
+    <div class="ui-control ui-search-wrap rtl" aria-label="بحث السندات">
+      <span aria-hidden="true" class="ui-search-icon">🔍</span>
+      <input class="ui-field ui-ctl-input ui-search-input" id="receipts-search-input" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="بحث: تاريخ، نوع، مبلغ، طرف، بيان..." type="text"/>
+    </div>
+  </div>
+
+  <div class="ui-toolbar-row ui-toolbar-row2" aria-label="الفرز">
+    <div class="ui-control ui-sort-pill" aria-label="فرز السندات">
+      <span class="ui-label">فرز السندات</span>
+      <select class="ui-field ui-select" id="receipts-sort-by" onchange="onReceiptsAdvancedChanged()">
+        <option value="date">التاريخ</option>
+        <option value="amount">المبلغ</option>
+        <option value="type">النوع</option>
+        <option value="party">الطرف الآخر</option>
+        <option value="source">المصدر</option>
+      </select>
+      <button class="btn-ui btn-icon" data-dir="desc" id="receipts-sort-dir" onclick="toggleReceiptsSortDir()" title="عكس ترتيب فرز السندات" type="button">⬇️</button>
+    </div>
+
+    <div class="ui-advbar-meta">
+      <div class="text-xs text-gray-500 dark:text-gray-400" id="receipts-advanced-hint"></div>
+    </div>
+  </div>
 </div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">المصدر</label>
-<select class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200" id="receipts-filter-source" onchange="onReceiptsAdvancedChanged()">
-<option value="">الكل</option>
-<option value="payment">دفعة (عقد)</option>
-<option value="salary">راتب</option>
-<option value="expense">مصروف</option>
-</select>
+
+<div class="ui-toolbar-panel hidden" id="receipts-filters-panel" aria-label="الفلاتر المتقدمة">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="receipts-filter-type">النوع</label>
+      <select class="ui-field ui-select" id="receipts-filter-type" onchange="onReceiptsAdvancedChanged()">
+        <option value="">الكل</option>
+        <option value="قبض">قبض</option>
+        <option value="صرف">صرف</option>
+      </select>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="receipts-filter-source">المصدر</label>
+      <select class="ui-field ui-select" id="receipts-filter-source" onchange="onReceiptsAdvancedChanged()">
+        <option value="">الكل</option>
+        <option value="payment">دفعة (عقد)</option>
+        <option value="salary">راتب</option>
+        <option value="expense">مصروف</option>
+      </select>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="receipts-filter-party">الطرف الآخر</label>
+      <input class="ui-field" id="receipts-filter-party" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="اسم المستأجر/الطرف..." type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="receipts-filter-desc">البيان</label>
+      <input class="ui-field" id="receipts-filter-desc" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="بحث في البيان..." type="text"/>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">قيمة (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="receipts-filter-amin" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="0" type="number"/>
+        <input class="ui-field w-full" id="receipts-filter-amax" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="999999" type="number"/>
+      </div>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">التاريخ (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="receipts-filter-dfrom" onchange="onReceiptsAdvancedChanged()" type="date"/>
+        <input class="ui-field w-full" id="receipts-filter-dto" onchange="onReceiptsAdvancedChanged()" type="date"/>
+      </div>
+    </div>
+
+    <div class="md:col-span-2 flex items-end justify-end">
+      <button class="btn-ui btn-reset" onclick="resetReceiptsAdvanced()" type="button">إعادة ضبط</button>
+    </div>
+  </div>
 </div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">الطرف الآخر</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-party" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="اسم المستأجر/الطرف..."/>
-</div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">البيان</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-desc" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="بحث في البيان..."/>
-</div>
-<div class="grid grid-cols-2 gap-2">
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">قيمة من</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-amin" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="0" type="number"/>
-</div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">إلى</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-amax" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="999999" type="number"/>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-2">
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">تاريخ من</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-dfrom" onchange="onReceiptsAdvancedChanged()" type="date"/>
-</div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">إلى</label>
-<input class="w-full border p-2 rounded-lg text-sm dark:bg-dark-bg dark:border-gray-700 bg-white dark:text-gray-200 outline-none" id="receipts-filter-dto" onchange="onReceiptsAdvancedChanged()" type="date"/>
-</div>
-</div>
-<div class="md:col-span-2 flex items-end justify-end">
-<button class="btn-ui btn-reset" onclick="resetReceiptsAdvanced()">إعادة ضبط</button>
-</div>
-</div>
-</div></div>
 <div class="table-wrap bg-white shadow-sm">
 <table class="ui-table min-w-full table-fixed text-right" id="receipts-history-table">
 <colgroup>

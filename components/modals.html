@@ -1,7 +1,7 @@
 <div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="property-modal">
 <div class="modal-content modal-glass rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-[fadeIn_0.2s_ease-out]">
 <div class="modal-header-glass p-6 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex justify-between items-center">
-<h3 class="text-xl font-bold">إضافة عقار جديد</h3>
+<h3 id="property-modal-title" class="text-xl font-bold">إضافة عقار جديد</h3>
 <button class="text-gray-400 hover:text-gray-600" onclick="closePropertyModal()">✕</button>
 </div>
 <form class="p-6 grid grid-cols-1 gap-4" id="property-form">
@@ -157,10 +157,10 @@
 <div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="add-lease-modal">
 <div class="modal-content modal-glass rounded-xl shadow-2xl w-full max-w-lg">
 <form class="p-6 space-y-4" id="add-lease-form">
-<h3 class="font-bold text-xl mb-4">عقد جديد</h3>
+<h3 class="font-bold text-xl mb-4 text-right">عقد جديد</h3>
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">العقار</label>
-<select class="w-full border p-2 rounded" id="add-lease-prop"></select>
+<select class="ui-field ui-select w-full" id="add-lease-prop"></select>
 </div>
 <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
 <div class="flex items-center justify-between gap-3">
@@ -168,7 +168,7 @@
 <button class="btn-ui btn-secondary no-print" onclick="addLeaseUnitRow()" type="button">+ إضافة وحدة</button>
 </div>
 <div class="mt-2 overflow-auto">
-<table class="min-w-full text-sm">
+<table class="min-w-full text-sm text-right">
 <thead>
 <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
 <th class="text-right py-2 px-2 w-2/3">الوحدة</th>
@@ -185,40 +185,40 @@
 </div>
 <div class="text-rose-600 text-sm mt-2" id="add-lease-units-error"></div>
 </div>
-<input class="w-full border p-2 rounded" id="add-lease-tenant" placeholder="اسم المستأجر" required=""/>
+<input class="ui-field w-full" id="add-lease-tenant" placeholder="اسم المستأجر" required=""/>
 <div class="grid grid-cols-2 gap-3">
-<input class="border p-2 rounded" id="add-lease-phone" placeholder="رقم الهاتف"/>
-<input class="border p-2 rounded" id="add-lease-email" placeholder="البريد الإلكتروني" type="email"/>
+<input class="ui-field w-full" id="add-lease-phone" placeholder="رقم الهاتف"/>
+<input class="ui-field w-full" id="add-lease-email" placeholder="البريد الإلكتروني" type="email"/>
 </div>
 <div class="grid grid-cols-2 gap-3">
-<input class="border p-2 rounded" id="add-lease-paymentsCount" min="0" placeholder="عدد الدفعات" type="number"/>
-<input class="border p-2 rounded" id="add-lease-chequesCount" min="0" placeholder="عدد الشيكات" type="number"/>
+<input class="ui-field w-full" id="add-lease-paymentsCount" min="0" placeholder="عدد الدفعات" type="number"/>
+<input class="ui-field w-full" id="add-lease-chequesCount" min="0" placeholder="عدد الشيكات" type="number"/>
 </div>
 <div class="grid grid-cols-2 gap-3">
-<input class="border p-2 rounded" id="add-lease-bankGuarantee" min="0" placeholder="قيمة الضمان البنكي" type="number"/>
-<select class="border p-2 rounded" id="add-lease-tenantType">
+<input class="ui-field w-full" id="add-lease-bankGuarantee" min="0" placeholder="قيمة الضمان البنكي" type="number"/>
+<select class="ui-field ui-select w-full" id="add-lease-tenantType">
 <option value="">نوع المستأجر...</option>
 <option value="company">شركة</option>
 <option value="individual">فرد</option>
 </select>
 </div>
 <div class="hidden" id="add-lease-companyFields">
-<input class="w-full border p-2 rounded" id="add-lease-tradeLicense" placeholder="رقم الرخصة التجارية (للشركات)"/>
+<input class="ui-field w-full" id="add-lease-tradeLicense" placeholder="رقم الرخصة التجارية (للشركات)"/>
 </div>
 <div class="hidden" id="add-lease-personFields">
-<input class="w-full border p-2 rounded" id="add-lease-idNumber" placeholder="رقم الهوية (للأفراد)"/>
+<input class="ui-field w-full" id="add-lease-idNumber" placeholder="رقم الهوية (للأفراد)"/>
 </div>
 <div>
-<input class="w-full border p-2 rounded" id="add-lease-contractNo" placeholder="رقم العقد"/>
+<input class="ui-field w-full" id="add-lease-contractNo" placeholder="رقم العقد"/>
 </div>
 <div class="grid grid-cols-2 gap-3">
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">تاريخ البدء</label>
-<input class="w-full border p-2 rounded" id="add-lease-start" type="date"/>
+<input class="ui-field w-full" id="add-lease-start" type="date"/>
 </div>
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">تاريخ الانتهاء</label>
-<input class="w-full border p-2 rounded" id="add-lease-end" type="date"/>
+<input class="ui-field w-full" id="add-lease-end" type="date"/>
 </div>
 </div>
 <div class="text-rose-600 text-sm" id="add-lease-errors"></div>

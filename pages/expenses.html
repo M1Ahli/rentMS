@@ -1,49 +1,70 @@
 <section class="view hidden" id="expenses-view">
 <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">المصروفات</h2>
-<div class="glass-card bg-transparent bg-white p-4 rounded-xl mb-4 shadow-sm" id="expenses-advanced-bar"><div class="ui-controls-bar ui-rtl-end ui-advbar"><button class="btn-ui btn-filter ui-ctl-btn" id="expenses-toggle-filters" onclick="toggleExpensesFilters()" type="button">
-          عرض الفلاتر المتقدمة
-        </button><button class="btn-ui btn-icon ui-ctl-btn" id="expenses-reset-btn" onclick="resetExpensesAdvanced()" title="إعادة ضبط" type="button">↻</button><span aria-hidden="true" class="ui-ctl-divider"></span><div class="ui-control ui-sort"><div class="flex items-center gap-2 ui-sort-group"><button class="border border-gray-200 dark:border-gray-700 bg-white hover:bg-gray-50 dark:bg-dark-bg dark:hover:bg-gray-800 px-3 py-2 rounded-lg ui-dir btn-ui btn-icon" data-dir="desc" id="expenses-sort-dir" onclick="toggleExpensesSortDir()" title="عكس ترتيب الفرز">⬇️</button><select class="ui-field ui-select" id="expenses-sort-by" onchange="onExpensesAdvancedChanged()">
-<option value="date">التاريخ</option>
-<option value="amount">المبلغ</option>
-<option value="type">النوع</option>
-</select></div></div><div class="ui-control ui-search flex-1"><div class="relative ui-search-wrap">
-<input class="w-full border p-2 pr-10 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none ui-field ui-input" id="expenses-search-input" oninput="onExpensesAdvancedChangedDebounced()" placeholder="بحث: نوع المصروف / البيان / التاريخ / المبلغ ..."/>
-<span class="absolute right-3 top-2.5 text-gray-400 text-sm">🔍</span>
-</div></div></div><div class="ui-advbar-meta"><div class="text-xs text-gray-500 dark:text-gray-400" id="expenses-filter-hint"></div></div><div class="hidden mt-3 bg-gray-50 dark:bg-gray-800/40 rounded-lg p-4 border border-gray-200 dark:border-gray-700" id="expenses-filters-panel">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">النوع</label>
-<select class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white dark:bg-dark-bg text-gray-700 dark:text-gray-200" id="expenses-filter-type" onchange="onExpensesAdvancedChanged()">
-<option value="">الكل</option>
-<option value="صيانة">صيانة</option>
-<option value="رسوم كهرباء وماء">رسوم كهرباء وماء</option>
-<option value="رسوم بلدية">رسوم بلدية</option>
-<option value="محكمة">محكمة</option>
-<option value="أخرى">أخرى</option>
-</select>
+<!-- Advanced Search & Sort: Expenses -->
+<div class="ui-toolbar" id="expenses-advanced-bar" aria-label="شريط البحث والفرز">
+  <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
+    <button class="btn-ui btn-filter" id="expenses-toggle-filters" onclick="toggleExpensesFilters()" type="button">🧰 الفلاتر المتقدمة</button>
+    <button class="btn-ui btn-reset" id="expenses-reset-btn" onclick="resetExpensesAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
+
+    <div class="ui-control ui-search-wrap rtl" aria-label="بحث المصروفات">
+      <span aria-hidden="true" class="ui-search-icon">🔍</span>
+      <input class="ui-field ui-ctl-input ui-search-input" id="expenses-search-input" oninput="onExpensesAdvancedChangedDebounced()" placeholder="بحث: نوع المصروف / البيان / التاريخ / المبلغ ..." type="text"/>
+    </div>
+  </div>
+
+  <div class="ui-toolbar-row ui-toolbar-row2" aria-label="الفرز">
+    <div class="ui-control ui-sort-pill" aria-label="فرز المصروفات">
+      <span class="ui-label">فرز المصروفات</span>
+      <select class="ui-field ui-select" id="expenses-sort-by" onchange="onExpensesAdvancedChanged()">
+        <option value="date">التاريخ</option>
+        <option value="amount">المبلغ</option>
+        <option value="type">النوع</option>
+      </select>
+      <button class="btn-ui btn-icon" data-dir="desc" id="expenses-sort-dir" onclick="toggleExpensesSortDir()" title="عكس ترتيب الفرز" type="button">⬇️</button>
+    </div>
+
+    <div class="ui-advbar-meta">
+      <div class="text-xs text-gray-500 dark:text-gray-400" id="expenses-filter-hint"></div>
+    </div>
+  </div>
 </div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">المبلغ (من - إلى)</label>
-<div class="flex gap-2">
-<input class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" id="expenses-filter-amount-min" oninput="onExpensesAdvancedChangedDebounced()" placeholder="من" type="number"/>
-<input class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" id="expenses-filter-amount-max" oninput="onExpensesAdvancedChangedDebounced()" placeholder="إلى" type="number"/>
+
+<div class="ui-toolbar-panel hidden" id="expenses-filters-panel" aria-label="الفلاتر المتقدمة">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    <div class="ui-control ui-stack">
+      <label class="ui-label" for="expenses-filter-type">النوع</label>
+      <select class="ui-field ui-select" id="expenses-filter-type" onchange="onExpensesAdvancedChanged()">
+        <option value="">الكل</option>
+        <option value="صيانة">صيانة</option>
+        <option value="رسوم كهرباء وماء">رسوم كهرباء وماء</option>
+        <option value="رسوم بلدية">رسوم بلدية</option>
+        <option value="محكمة">محكمة</option>
+        <option value="أخرى">أخرى</option>
+      </select>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">المبلغ (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="expenses-filter-amount-min" oninput="onExpensesAdvancedChangedDebounced()" placeholder="من" type="number"/>
+        <input class="ui-field w-full" id="expenses-filter-amount-max" oninput="onExpensesAdvancedChangedDebounced()" placeholder="إلى" type="number"/>
+      </div>
+    </div>
+
+    <div class="ui-control ui-stack">
+      <label class="ui-label">التاريخ (من - إلى)</label>
+      <div class="flex gap-2">
+        <input class="ui-field w-full" id="expenses-filter-date-from" onchange="onExpensesAdvancedChanged()" type="date"/>
+        <input class="ui-field w-full" id="expenses-filter-date-to" onchange="onExpensesAdvancedChanged()" type="date"/>
+      </div>
+    </div>
+
+    <div class="md:col-span-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
+      <button class="btn-ui btn-reset" onclick="resetExpensesAdvanced()" type="button">إعادة ضبط</button>
+      <div class="text-xs text-gray-500 dark:text-gray-400">* يتم حفظ الفرز والبحث تلقائياً</div>
+    </div>
+  </div>
 </div>
-</div>
-<div>
-<label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">التاريخ (من - إلى)</label>
-<div class="flex gap-2">
-<input class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" id="expenses-filter-date-from" onchange="onExpensesAdvancedChanged()" type="date"/>
-<input class="w-full border p-2 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" id="expenses-filter-date-to" onchange="onExpensesAdvancedChanged()" type="date"/>
-</div>
-</div>
-<div class="md:col-span-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1">
-<button class="btn-ui btn-reset" onclick="resetExpensesAdvanced()" type="button">
-              إعادة ضبط
-            </button>
-<div class="text-xs text-gray-500 dark:text-gray-400">* يتم حفظ الفرز والبحث تلقائياً</div>
-</div>
-</div>
-</div></div>
 <div class="grid md:grid-cols-3 gap-6">
 <form class="bg-white p-6 rounded-xl shadow-sm space-y-4 h-fit" id="new-expense-form">
 <h3 class="font-bold text-gray-700 dark:text-gray-200">إضافة مصروف جديد</h3>
