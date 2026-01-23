@@ -194,6 +194,66 @@
 <input class="ui-field w-full" id="add-lease-paymentsCount" min="0" placeholder="عدد الدفعات" type="number"/>
 <input class="ui-field w-full" id="add-lease-chequesCount" min="0" placeholder="عدد الشيكات" type="number"/>
 </div>
+
+<!-- Optional: Schedule payments/cheques (adds them to registers as Pending) -->
+<div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5" id="add-lease-schedule-box">
+  <div class="flex items-center justify-between gap-3">
+    <div>
+      <div class="font-extrabold text-sm text-gray-800 dark:text-white">جدولة الدفعات / الشيكات (اختياري)</div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">سيتم إنشاء سجلات بصفة <span class="font-bold">بانتظار الدفع</span> / <span class="font-bold">بانتظار الصرف</span>.</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+      <input type="checkbox" id="add-lease-schedule-payments" onchange="onAddLeaseScheduleChanged()" />
+      إنشاء سجل دفعات (بانتظار الدفع)
+    </label>
+    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+      <input type="checkbox" id="add-lease-schedule-cheques" onchange="onAddLeaseScheduleChanged()" />
+      إنشاء سجل شيكات (بانتظار الصرف)
+    </label>
+  </div>
+
+  <div class="hidden mt-3" id="add-lease-payplan-wrap">
+    <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الدفعات المجدولة</div>
+    <div class="overflow-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th class="py-2 px-2 text-right w-10">#</th>
+            <th class="py-2 px-2 text-right">المبلغ (AED)</th>
+            <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
+            <th class="py-2 px-2 text-right">طريقة الدفع</th>
+          </tr>
+        </thead>
+        <tbody id="add-lease-payplan-body"></tbody>
+      </table>
+    </div>
+    <div class="text-rose-600 text-sm mt-2" id="add-lease-payplan-error"></div>
+  </div>
+
+  <div class="hidden mt-3" id="add-lease-chqplan-wrap">
+    <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الشيكات المجدولة</div>
+    <div class="overflow-auto">
+      <table class="min-w-full text-sm">
+        <thead>
+          <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+            <th class="py-2 px-2 text-right w-10">#</th>
+            <th class="py-2 px-2 text-right">رقم الشيك</th>
+            <th class="py-2 px-2 text-right">القيمة (AED)</th>
+            <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
+            <th class="py-2 px-2 text-right">البنك</th>
+            <th class="py-2 px-2 text-right">الغرض</th>
+            <th class="py-2 px-2 text-right">الوحدة</th>
+          </tr>
+        </thead>
+        <tbody id="add-lease-chqplan-body"></tbody>
+      </table>
+    </div>
+    <div class="text-rose-600 text-sm mt-2" id="add-lease-chqplan-error"></div>
+  </div>
+</div>
 <div class="grid grid-cols-2 gap-3">
 <input class="ui-field w-full" id="add-lease-bankGuarantee" min="0" placeholder="قيمة الضمان البنكي" type="number"/>
 <select class="ui-field ui-select w-full" id="add-lease-tenantType">
@@ -368,7 +428,7 @@
 </div>
 <div>
 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">المبلغ الإجمالي</label>
-<input class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-surface" id="lease-pay-total" oninput="updateLeasePaySum()" placeholder="مثال: 190000" type="text"/>
+<input class="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-dark-surface" id="lease-pay-total" oninput="onLeasePayTotalChange()" placeholder="مثال: 190000" type="text"/>
 </div>
 <div>
 <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">طريقة الدفع</label>
@@ -418,4 +478,39 @@
 </div>
 </div>
 </div>
+</div>
+
+
+<!-- Lease Archive Modal (Manual) -->
+<div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="lease-archive-modal">
+  <div class="modal-content modal-glass rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+    <div class="modal-header-glass p-6 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex justify-between items-center">
+      <h3 class="text-xl font-bold">أرشفة العقد</h3>
+      <button class="text-gray-400 hover:text-gray-600 dark:hover:text-white" type="button" onclick="closeLeaseArchiveModal()">✕</button>
+    </div>
+
+    <form id="lease-archive-form" class="p-6 grid grid-cols-1 gap-4">
+      <input type="hidden" id="lease-archive-groupkey" />
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">سبب الأرشفة</label>
+        <select class="ui-field ui-select" id="lease-archive-action" required>
+          <option value="">اختر السبب...</option>
+          <option value="cancel">إلغاء العقد</option>
+          <option value="vacate">إخلاء الوحدة</option>
+        </select>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">سيتم نقل العقد إلى الأرشيف وتحويل الوحدة/الوحدات إلى شاغرة.</p>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">ملاحظة (اختياري)</label>
+        <textarea class="ui-field ui-input" id="lease-archive-note" rows="3" placeholder="مثال: انتهاء العقد وتم إخلاء الوحدة بتاريخ..." ></textarea>
+      </div>
+
+      <div class="modal-actions flex justify-end gap-3 mt-2">
+        <button class="btn-ui btn-reset" type="button" onclick="closeLeaseArchiveModal()">إلغاء</button>
+        <button class="btn-ui btn-danger" type="submit">أرشفة</button>
+      </div>
+    </form>
+  </div>
 </div>

@@ -227,45 +227,5 @@
 <ul id="late-tenants-list"></ul>
 </div>
 <!-- /Hidden placeholders -->
-<div class="mt-6">
-<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
-<h3 class="font-bold text-lg text-indigo-700 border-r-4 border-indigo-700 pr-2">سجل العقود (الحالية والسابقة)</h3>
-<div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-<select class="border p-2 rounded text-sm bg-white dark:bg-gray-800 dark:border-gray-600" id="report-lease-status-filter">
-<option value="all">الكل</option>
-<option value="مؤجرة">مؤجرة</option>
-<option value="ملغاة">ملغاة</option>
-<option value="تجديد عقد">تجديد عقد</option>
-<option value="مخلى">مخلى</option>
-</select>
-<input class="border p-2 rounded text-sm w-full sm:w-72 bg-white dark:bg-gray-800 dark:border-gray-600" id="report-lease-search" placeholder="بحث بالمستأجر / رقم العقد / الوحدة..."/>
-</div>
-</div>
-<div class="flex flex-wrap gap-3 text-xs mb-3">
-<span class="px-3 py-1 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-200 dark:border-indigo-800" id="report-leases-counts"></span>
-<span class="px-3 py-1 rounded bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700">
-            ملاحظة: العقود الملغاة/المجددة يتم حفظها تلقائياً ضمن السجل
-          </span>
-</div>
-<div class="table-wrap bg-white shadow-sm">
-<table class="ui-table min-w-full text-right">
-<thead>
-<tr>
-<th class="w-[170px]">العقار / الوحدة</th>
-<th class="w-[220px]">المستأجر</th>
-<th class="w-[140px]">القيمة</th>
-<th class="w-[180px]">رقم العقد</th>
-<th class="w-[110px]">من</th>
-<th class="w-[110px]">إلى</th>
-<th class="w-[90px]">الحالة</th>
-<th>ملاحظة</th>
-<th class="w-[130px]">تاريخ الأرشفة</th>
-</tr>
-</thead>
-<tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="report-leases-body"></tbody>
-</table>
-</div>
-<p class="hidden mt-3 text-sm text-gray-600 dark:text-gray-300" id="report-leases-empty"></p>
-</div>
-</div>
+<!-- ملاحظة: تم نقل "سجل العقود" إلى صفحة "أرشيف العقود" (leases-archive) ليعرض العقود السابقة فقط. -->
 </section>

@@ -23,7 +23,7 @@
     navSlot.remove();
 
     // 2) Views (insert before modals slot so sections remain in DOM like before)
-    const pages = ["dashboard.html", "properties.html", "leases.html", "tenants.html", "cheques.html", "payments.html", "expenses.html", "salaries.html", "receipts-history.html", "receipt.html", "reports.html", "notices.html", "settings.html"];
+    const pages = ["dashboard.html", "properties.html", "leases.html", "leases-archive.html", "tenants.html", "cheques.html", "payments.html", "expenses.html", "salaries.html", "receipts-history.html", "receipt.html", "reports.html", "notices.html", "settings.html"];
     for(const p of pages){
       const viewHTML = await loadText('./pages/' + p);
       insertBeforeSlot(modalsSlot, viewHTML);
@@ -45,13 +45,32 @@
       document.body.appendChild(s);
     });
 
-    await new Promise((resolve, reject)=>{
-      const s = document.createElement('script');
-      s.src = './assets/js/app.js';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('Failed to load app.js'));
-      document.body.appendChild(s);
-    });
+    // 4b) Main app scripts (split into maintainable files)
+    const appScripts = [
+      './assets/js/app/01_core.js',
+      './assets/js/app/02_notices_health.js',
+      './assets/js/app/03_dashboard.js',
+      './assets/js/app/04_properties.js',
+      './assets/js/app/05_leases.js',
+      './assets/js/app/06_tenants.js',
+      './assets/js/app/07_payments.js',
+      './assets/js/app/08_cheques.js',
+      './assets/js/app/09_expenses.js',
+      './assets/js/app/10_salaries.js',
+      './assets/js/app/11_receipts.js',
+      './assets/js/app/12_reports.js',
+      './assets/js/app/13_settings_init_ui.js',
+    ];
+
+    for(const src of appScripts){
+      await new Promise((resolve, reject)=>{
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error('Failed to load ' + src));
+        document.body.appendChild(s);
+      });
+    }
 
     // Notify enhancers that dynamic HTML is ready
     document.dispatchEvent(new CustomEvent('ui:components-loaded'));

@@ -396,7 +396,8 @@ body.dark-mode select optgroup{
   border-radius: 14px;
   border: 1px solid var(--border2);
   background: rgba(255,255,255,.78);
-  color: var(--text);
+  /* Keep buttons identical in Light & Dark: dark text on light button background */
+  color: #0f172a;
   font-weight: 900;
   font-size: 13px;
   line-height: 1;
@@ -404,17 +405,7 @@ body.dark-mode select optgroup{
   user-select: none;
   transition: transform .08s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease, color .16s ease;
 }
-body.dark-mode .btn-ui{
-  /* Make buttons clear & "colored" (vivid) in Dark Mode like Light Mode */
-  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.12));
-  border-color: rgba(255,255,255,.26);
-  color: #f8fafc;
-}
 .btn-ui:hover{ background: rgba(255,255,255,.92); box-shadow: 0 10px 22px rgba(2,6,23,.10); }
-body.dark-mode .btn-ui:hover{
-  background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.16));
-  box-shadow: 0 12px 24px rgba(0,0,0,.30);
-}
 .btn-ui:active{ transform: translateY(1px); }
 
 .btn-ui.btn-icon{
@@ -451,22 +442,24 @@ body.dark-mode .btn-ui:hover{
 /* Compact action group inside tables */
 .ui-actions{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
 .btn-ui.btn-secondary{
-  background: rgba(17,24,39,.10);
+  /*
+    Secondary/ghost buttons يجب أن تبقى بنفس شكل الوضع النهاري حتى داخل الوضع الليلي.
+    سابقاً كانت شفافة/رمادية (rgba) فتظهر داكنة جداً فوق خلفية الدارك.
+    لذلك نستخدم لون رمادي فاتح ثابت (مماثل لتأثيرها فوق الخلفية البيضاء).
+  */
+  background: rgba(233,234,238,.92);
+  border-color: rgba(2,6,23,.14);
+  color: #0f172a;
 }
-body.dark-mode .btn-ui.btn-secondary{
-  background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.10));
-  border-color: rgba(255,255,255,.22);
+.btn-ui.btn-secondary:hover{
+  background: rgba(233,234,238,.98);
+  box-shadow: 0 10px 22px rgba(2,6,23,.10);
 }
 
 .btn-ui.btn-reset{
   background: rgba(244,63,94,.10);
   border-color: rgba(244,63,94,.18);
   color: #be123c;
-}
-body.dark-mode .btn-ui.btn-reset{
-  background: rgba(244,63,94,.14);
-  border-color: rgba(244,63,94,.22);
-  color: #fecdd3;
 }
 
 .btn-ui.btn-ui-sm{
@@ -512,11 +505,8 @@ body.dark-mode .btn-ui.btn-reset{
   border: 1px solid var(--border2);
   background: rgba(255,255,255,.78);
   font-weight: 900;
-}
-body.dark-mode .ui-button{
-  background: linear-gradient(180deg, rgba(255,255,255,.22), rgba(255,255,255,.12));
-  border-color: rgba(255,255,255,.26);
-  color: #f8fafc;
+  /* Keep identical in Light & Dark */
+  color: #0f172a;
 }
 
 /* Small labels + vertical stacks (used in Properties filters, etc.) */

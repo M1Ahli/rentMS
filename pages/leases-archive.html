@@ -1,0 +1,79 @@
+<section class="view hidden" id="leases-archive-view">
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-white">أرشيف العقود</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">يعرض العقود المؤرشفة فقط (بعد التجديد أو الإلغاء/الإخلاء). لا يتم الأرشفة تلقائيًا عند انتهاء التاريخ.</p>
+    </div>
+  </div>
+
+  <div class="ui-toolbar" id="leases-archive-toolbar" aria-label="شريط بحث أرشيف العقود">
+    <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
+      <div class="ui-control ui-sort-pill" aria-label="فلتر الحالة">
+        <span class="ui-label">الحالة</span>
+        <select class="ui-field ui-select" id="leases-archive-status-filter" aria-label="فلتر حالة العقد">
+          <option value="all">الكل</option>
+          <option value="منتهية">منتهية (بعد إخلاء/إلغاء)</option>
+          <option value="ملغاة">ملغاة</option>
+          <option value="تجديد عقد">تجديد عقد</option>
+          <option value="مخلى">مخلى</option>
+        </select>
+      </div>
+
+      <div class="ui-control ui-sort-pill" aria-label="فلتر سبب الأرشفة">
+        <span class="ui-label">سبب الأرشفة</span>
+        <select class="ui-field ui-select" id="leases-archive-reason-filter" aria-label="فلتر سبب الأرشفة">
+          <option value="all">الكل</option>
+          <option value="renew">تجديد</option>
+          <option value="cancel">إلغاء</option>
+          <option value="vacate">إخلاء</option>
+        </select>
+      </div>
+
+      <div class="ui-control ui-search-wrap rtl" aria-label="بحث في أرشيف العقود" role="search">
+        <span aria-hidden="true" class="ui-search-icon">🔍</span>
+        <input class="ui-field ui-ctl-input ui-search-input" id="leases-archive-search" type="text" placeholder="بحث: المستأجر / رقم العقد / الوحدة..." aria-label="بحث في أرشيف العقود" />
+      </div>
+
+      <button class="btn-ui btn-reset" id="leases-archive-reset" type="button" onclick="resetLeasesArchiveFilters()">↻ إعادة ضبط</button>
+
+      <div class="ui-advbar-meta">
+        <span class="ui-hint" id="leases-archive-counts"></span>
+      </div>
+    </div>
+
+    <div class="ui-toolbar-row ui-toolbar-row2" aria-label="فلترة حسب تاريخ الأرشفة">
+      <div class="ui-control ui-sort-pill" aria-label="من تاريخ">
+        <span class="ui-label">من تاريخ</span>
+        <input class="ui-field ui-input" id="leases-archive-date-from" type="date" aria-label="من تاريخ الأرشفة" />
+      </div>
+      <div class="ui-control ui-sort-pill" aria-label="إلى تاريخ">
+        <span class="ui-label">إلى تاريخ</span>
+        <input class="ui-field ui-input" id="leases-archive-date-to" type="date" aria-label="إلى تاريخ الأرشفة" />
+      </div>
+      <div class="text-xs text-gray-500 dark:text-gray-400">* التاريخ يعتمد على تاريخ الأرشفة (ليس تاريخ نهاية العقد)</div>
+    </div>
+  </div>
+
+  <div class="table-wrap bg-white shadow-sm">
+    <table class="ui-table min-w-full text-right">
+      <thead>
+        <tr>
+          <th class="w-[170px]">العقار / الوحدة</th>
+          <th class="w-[220px]">المستأجر</th>
+          <th class="w-[140px]">القيمة</th>
+          <th class="w-[180px]">رقم العقد</th>
+          <th class="w-[110px]">من</th>
+          <th class="w-[110px]">إلى</th>
+          <th class="w-[90px]">الحالة</th>
+          <th class="w-[120px]">سبب الأرشفة</th>
+          <th>ملاحظة</th>
+          <th class="w-[130px]">تاريخ الأرشفة</th>
+          <th class="w-[130px]">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="leases-archive-body"></tbody>
+    </table>
+  </div>
+
+  <p class="hidden mt-3 text-sm text-gray-600 dark:text-gray-300" id="leases-archive-empty"></p>
+</section>

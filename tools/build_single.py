@@ -22,6 +22,7 @@ PAGES = [
     'dashboard.html',
     'properties.html',
     'leases.html',
+    'leases-archive.html',
     'tenants.html',
     'cheques.html',
     'payments.html',
@@ -32,6 +33,24 @@ PAGES = [
     'reports.html',
     'notices.html',
     'settings.html',
+]
+
+
+# JS modules (UIV25 Refactor)
+APP_MODULES = [
+    '01_core.js',
+    '02_notices_health.js',
+    '03_dashboard.js',
+    '04_properties.js',
+    '05_leases.js',
+    '06_tenants.js',
+    '07_payments.js',
+    '08_cheques.js',
+    '09_expenses.js',
+    '10_salaries.js',
+    '11_receipts.js',
+    '12_reports.js',
+    '13_settings_init_ui.js',
 ]
 
 
@@ -52,8 +71,12 @@ def build() -> Path:
     for p in PAGES:
         views.append(read_text(ROOT / 'pages' / p))
 
-    # Inline JS (app + optional router + optional dev tools)
-    app_js = read_text(ROOT / 'assets' / 'js' / 'app.js')
+    # Inline JS (ui enhancer + app modules + optional router + optional dev tools)
+    ui_enhancer_js = read_text(ROOT / 'assets' / 'js' / 'ui_unified.js')
+    app_parts = []
+    for m in APP_MODULES:
+        app_parts.append(read_text(ROOT / 'assets' / 'js' / 'app' / m))
+    app_js = '\n\n'.join(app_parts)
     router_js_path = ROOT / 'assets' / 'js' / 'router.js'
     router_js = read_text(router_js_path) if router_js_path.exists() else ''
     dev_js_path = ROOT / 'assets' / 'js' / 'dev-tools.js'
@@ -79,6 +102,7 @@ def build() -> Path:
         nav
         + '\n' + '\n'.join(views)
         + '\n' + modals
+        + '\n<script>\n' + ui_enhancer_js + '\n</script>\n'
         + '\n<script>\n' + app_js + '\n</script>\n'
     )
     if router_js.strip():
