@@ -24,7 +24,14 @@
   // In that case, we must NOT attempt directory/file handles to avoid freezes.
   function _isInsecureHttp(){
     try{
-      return (!window.isSecureContext) && (location.protocol === 'http:') && (location.hostname !== 'localhost');
+      // IMPORTANT:
+      // Some users may enable Chrome flags ("treat insecure origin as secure") which can make
+      // window.isSecureContext=true even on http://NAS_IP. That leads to filesystem/OPFS code paths
+      // that are unreliable on NAS/HTTP and can freeze the UI.
+      // We therefore force "NAS HTTP" detection purely by URL (http + not localhost).
+      const host = String(location.hostname || '').toLowerCase();
+      const isLocal = (host === 'localhost' || host === '127.0.0.1' || host === '[::1]');
+      return (location.protocol === 'http:') && !isLocal;
     }catch(e){
       return true;
     }
