@@ -104,6 +104,7 @@ return `
             </td>
             <td class="px-4 py-3">
               <div class="flex gap-1">
+                <button onclick="openUnitAttachmentsViewer(\'${p.id}\',\'${u.id}\')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="الملفات">📁</button>
                 <button onclick="openUnitModal('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="تعديل">✏️</button>
                 <button onclick="openLeaseModal('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-filter" title="إدارة العقد">📄</button>
                 <button onclick="deleteUnit('${p.id}','${u.id}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>

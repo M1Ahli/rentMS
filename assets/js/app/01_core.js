@@ -41,6 +41,7 @@
   ];
 
   let properties = [], cheques = [], expenses = [], payments = [], leasePayments = [], leaseAllocations = [], tenantsContacts = {}, salaries = [];
+  let cases = [], caseUpdates = [], caseEvents = [];
   let editingChequeId = null;
   let pendingChequeAfterEditId = null;
   let pendingChequeAfterEditStatus = '';
@@ -354,7 +355,7 @@
     if(!sel) return;
     localStorage.setItem('re_rent_basis', sel.value);
     updateRentLabels();
-    updateDashboard();
+    try{ (window.updateDashboard || updateDashboard)?.(); }catch(e){}
     // تحديث التقارير لو كانت مفتوحة أو حتى لو كانت مخفية
     try{ renderReports(); } catch(e){}
   }
@@ -763,7 +764,22 @@
     });
   }
 
-  function resetLeasesArchiveFilters(){
+  
+
+function toggleLeasesArchiveFiltersPanel(){
+  const panel = document.getElementById('leases-archive-filters-panel');
+  if(!panel) return;
+  const willOpen = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !willOpen);
+  const btn = document.getElementById('leases-archive-toggle-filters');
+  if(btn){
+    btn.setAttribute('aria-controls','leases-archive-filters-panel');
+    btn.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    btn.classList.toggle('is-open', willOpen);
+  }
+}
+
+function resetLeasesArchiveFilters(){
     const st = document.getElementById('leases-archive-status-filter');
     const rs = document.getElementById('leases-archive-reason-filter');
     const df = document.getElementById('leases-archive-date-from');
@@ -840,8 +856,10 @@ function logAction(msg){
         leasePayments,
         leaseAllocations,
         tenantsContacts,
-        salaries
-      };
+        salaries,
+        cases,
+        caseUpdates,
+        caseEvents};
     }
 
 
@@ -1151,6 +1169,9 @@ cheques = o.cheques || [];
           }
         });
         salaries = o.salaries || [];
+        cases = Array.isArray(o.cases) ? o.cases : [];
+        caseUpdates = Array.isArray(o.caseUpdates) ? o.caseUpdates : [];
+        caseEvents = Array.isArray(o.caseEvents) ? o.caseEvents : [];
 
         // Migration: ensure expenses have ID & type
         expenses = expenses.map(e => ({
@@ -1277,8 +1298,8 @@ cheques = o.cheques || [];
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
     document.getElementById('nav-'+id)?.classList.add('active');
 
-    if(id==='dashboard') updateDashboard();
-    else if(id==='properties') renderProperties();
+    if(id==='dashboard') { try{ (window.updateDashboard || updateDashboard)?.(); }catch(e){ console.warn('updateDashboard missing', e); } }
+else if(id==='properties') renderProperties();
     else if(id==='leases') renderLeases();
     else if(id==='leases-archive') renderLeasesArchivePage();
     else if(id==='tenants') renderTenants();
@@ -1288,6 +1309,7 @@ cheques = o.cheques || [];
     else if(id==='salaries') renderSalaries();
     else if(id==='receipts-history') renderReceiptsHistory();
     else if(id==='reports') renderReports();
+    else if(id==='police_cases') renderPoliceCases();
       else if(id==='settings'){ renderAutoBackups(); renderPerfSettings(); if(typeof renderHealthReportFromCache==='function') renderHealthReportFromCache(); }
       else if(id==='notices') renderNotices();
   

@@ -11,10 +11,7 @@
       <span aria-hidden="true">⚡</span>
       <span class="lease-filter-label">فلتر متقدمة</span>
     </button>
-
-    <button class="btn-ui btn-reset" id="leases-reset-btn" onclick="resetLeaseAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
-
-    <div class="ui-control ui-search-wrap rtl" aria-label="بحث العقود" role="search">
+<div class="ui-control ui-search-wrap rtl" aria-label="بحث العقود" role="search">
       <span aria-hidden="true" class="ui-search-icon">🔍</span>
       <input aria-label="بحث سريع" class="ui-field ui-ctl-input ui-search-input" id="lease-search-input" oninput="onLeaseAdvancedChangedDebounced()" placeholder="بحث سريع: رقم العقد، اسم المستأجر، الوحدة..." type="text"/>
     </div>
@@ -98,7 +95,11 @@
       </div>
     </div>
   </div>
+  <div class="flex items-center justify-end mt-3">
+    <button class="btn-ui btn-reset" onclick="resetLeaseAdvanced()" type="button">↻ إعادة ضبط</button>
+  </div>
 </div>
+
 <div class="table-wrap bg-white shadow-sm">
 <table class="ui-table min-w-full table-fixed text-right">
 <thead>

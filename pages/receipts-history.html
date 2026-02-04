@@ -18,9 +18,7 @@
 <div class="ui-toolbar" id="receipts-advanced-bar" aria-label="شريط البحث والفرز">
   <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
     <button class="btn-ui btn-filter" id="receipts-toggle-filters" onclick="toggleReceiptsFiltersPanel()" type="button">🧰 الفلاتر المتقدمة</button>
-    <button class="btn-ui btn-reset" id="receipts-reset-btn" onclick="resetReceiptsAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
-
-    <div class="ui-control ui-search-wrap rtl" aria-label="بحث السندات">
+<div class="ui-control ui-search-wrap rtl" aria-label="بحث السندات">
       <span aria-hidden="true" class="ui-search-icon">🔍</span>
       <input class="ui-field ui-ctl-input ui-search-input" id="receipts-search-input" oninput="onReceiptsAdvancedChangedDebounced()" placeholder="بحث: تاريخ، نوع، مبلغ، طرف، بيان..." type="text"/>
     </div>
@@ -105,7 +103,7 @@
 <col style="width:150px"/>
 <col style="width:260px"/>
 <col/>
-<col style="width:90px"/>
+<col style="width:170px"/>
 </colgroup>
 <thead class="bg-gray-50">
 <tr>
@@ -114,7 +112,7 @@
 <th class="w-[150px] px-4 py-3 whitespace-nowrap text-right">المبلغ</th>
 <th class="w-[260px] px-4 py-3 text-right">الطرف الآخر</th>
 <th class="px-4 py-3 text-right">البيان</th>
-<th class="w-[90px] px-4 py-3 whitespace-nowrap text-center">عرض</th>
+<th class="w-[170px] px-4 py-3 whitespace-nowrap text-center">عرض / ملفات</th>
 </tr>
 </thead>
 <tbody id="receipts-history-table-body"></tbody>

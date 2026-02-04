@@ -1386,6 +1386,7 @@ window.runHealthCheck = runHealthCheck;
       else if(key==='expenses') renderExpenses();
       else if(key==='salaries') renderSalaries();
       else if(key==='receipts-history') renderReceiptsHistory();
+      else if(key==='police_cases') renderPoliceCases();
     }
 
     function _pagerButtonsHtml(key, page, pages){

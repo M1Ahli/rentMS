@@ -277,7 +277,9 @@ function _leaseHay(l){
 
   function onChequesAdvancedChanged(){
     _chequesPersistFromUI();
-    renderCheques();
+    try{
+      if(typeof window.renderCheques === 'function'){ window.renderCheques(); }
+    }catch(e){}
   }
 
   function toggleChequesSortDir(){
@@ -569,6 +571,7 @@ let allLeases = [];
           units: [],
           _propNames: new Set(),
           _propIds: new Set(),
+          municipalityDoc: null,
         });
       }
       const g = groupsMap.get(key);
@@ -576,6 +579,10 @@ let allLeases = [];
       g.rent += (Number(u.rent)||0);
       if(u.propName) g._propNames.add(u.propName);
       if(u.propId) g._propIds.add(u.propId);
+
+      // municipality contract attachment (shared)
+      const md = (u.leaseExtra && u.leaseExtra.municipalityDoc) ? u.leaseExtra.municipalityDoc : null;
+      if(md && md.path && (!g.municipalityDoc || !g.municipalityDoc.path)) g.municipalityDoc = md;
 
       // unify start/end for group (earliest start, latest end)
       if(u.start){
@@ -606,6 +613,7 @@ let allLeases = [];
         rent: g.rent,
         units: g.units,
         unitsCount: g.units.length,
+        municipalityDoc: g.municipalityDoc,
         unitsNames,
         // Fields used by existing filters/sorts
         name: unitsNames || (g.units[0]?.name || ''),
@@ -656,7 +664,13 @@ let allLeases = [];
         </td>
         <td class="text-sm font-semibold text-gray-700 dark:text-gray-300">${escHtml(g.tenant||'')}</td>
         <td class="font-mono text-emerald-600 dark:text-emerald-400">${formatAED(g.rent)}</td>
-        <td class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded truncate max-w-[160px]" title="${escHtml(g.contractNo||'')}">${escHtml(g.contractNo||'')}</td>
+        <td class="text-xs font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded max-w-[200px]" title="${escHtml(g.contractNo||'')}">
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate">${escHtml(g.contractNo||'')}</span>
+            <a class="hover:underline" href="#" data-contract-no="${escHtml(g.contractNo||'')}" data-group-key="${escHtml(g.groupKey)}" onclick="openLeaseAttachmentsViewer(this.dataset.contractNo, this.dataset.groupKey); return false;" title="عرض جميع ملفات العقد">📁</a>
+            ${g.municipalityDoc && g.municipalityDoc.path ? `<a class="hover:underline" href="#" data-path="${escHtml(g.municipalityDoc.path)}" onclick="openAttachmentByPath(this.dataset.path); return false;" title="ملف العقد الموثق (البلدية)">📎</a>` : ''}
+          </div>
+        </td>
         <td class="text-xs">${escHtml(g.start||'-')}</td>
         <td class="text-xs ${(() => { const cs = leaseContractStatusFromDates(g.start, g.end); return (cs==='منتهي' ? 'text-red-600 dark:text-red-300 font-extrabold' : cs==='شارف على الانتهاء' ? 'text-orange-600 dark:text-orange-300 font-extrabold' : ''); })()}">${escHtml(g.end||'-')}</td>
         <td><span class="${leaseContractBadgeClass(statusText)}">${statusText}</span></td>
@@ -898,7 +912,109 @@ if(isMulti){
     uiToast('success','تمت إضافة العقار بنجاح');
   });
 
-  function openUnitModal(propId, unitId){
+  
+  // --------------------------
+  // Unit Attachments (Files)
+  // --------------------------
+  function _normUnitAtts(list){
+    const arr = Array.isArray(list) ? list : [];
+    return arr.map(a=>({
+      name: String(a?.name||'').trim(),
+      path: String(a?.path||'').trim(),
+      size: Number(a?.size||0)||0,
+      mime: String(a?.mime||'').trim(),
+      storedAt: Number(a?.storedAt||a?.stored_at||0)||0
+    })).filter(a=>a.name || a.path);
+  }
+
+  function getUnitModalAttachments(){
+    try{ return JSON.parse(document.getElementById('unit-attachments-json')?.value || '[]'); }catch(e){ return []; }
+  }
+  function setUnitModalAttachments(list){
+    const clean = _normUnitAtts(list);
+    const input = document.getElementById('unit-attachments-json');
+    if(input) input.value = JSON.stringify(clean);
+    renderUnitModalAttachments();
+  }
+  function renderUnitModalAttachments(){
+    const box = document.getElementById('unit-attachments-list');
+    if(!box) return;
+    const atts = _normUnitAtts(getUnitModalAttachments());
+    if(!atts.length){
+      box.innerHTML = `<div class="text-xs text-gray-500 dark:text-gray-400">لا توجد مرفقات.</div>`;
+      return;
+    }
+    box.innerHTML = atts.map((a, idx)=>{
+      const label = a.name || a.path || ('مرفق ' + (idx+1));
+      const p = a.path || '';
+      const link = p
+        ? `<a class="underline text-blue-600 dark:text-blue-400 break-all" href="#" onclick="openAttachmentByPath('${escJs(p)}'); return false;">${escHtml(label)}</a>`
+        : `<span class="font-semibold break-all">${escHtml(label)}</span>`;
+      const pathLine = p ? `<div class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400 break-all">${escHtml(p)}</div>` : '';
+      return `
+        <div class="flex items-start justify-between gap-3 p-2 rounded-xl bg-white/60 dark:bg-gray-900/30 border border-white/40 dark:border-gray-700">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm">${link}</div>
+            ${pathLine}
+          </div>
+          <button type="button" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف" onclick="removeUnitModalAttachment(${idx})">🗑️</button>
+        </div>
+      `;
+    }).join('');
+  }
+  function removeUnitModalAttachment(idx){
+    const list = getUnitModalAttachments();
+    list.splice(Number(idx)||0, 1);
+    setUnitModalAttachments(list);
+  }
+
+  async function uploadUnitModalFiles(){
+    try{
+      const input = document.getElementById('unit-attach-files');
+      let files = Array.from(input?.files || []);
+      if(!files.length){
+        files = (typeof pickFilesForUpload==='function') ? await pickFilesForUpload({ multiple:true, accept:'application/pdf,image/*' }) : [];
+      }
+      if(!files.length){
+        uiToast('info','اختر ملفات أولاً.');
+        return;
+      }
+      const unitId = (document.getElementById('unit-code')?.value || document.getElementById('unit-id')?.value || '').trim().toUpperCase();
+      if(!unitId){
+        uiToast('info','يرجى إدخال رقم الوحدة (UNT) أولاً.');
+        return;
+      }
+      const list = getUnitModalAttachments();
+      for(const f of files){
+        // Use original file name (sanitized) and avoid overwriting within the current attachments list
+        const usedNames = new Set((list||[]).map(a=>String(a?.path||'').split('/').pop()||'').filter(Boolean));
+        let safeName = String(f?.name || 'file').trim();
+        safeName = safeName.replace(/[\\/]+/g,'_').replace(/[^\w\.\-]+/g,'_').replace(/_+/g,'_');
+        if(safeName.length > 140) safeName = safeName.slice(-140);
+        if(!safeName) safeName = 'file';
+        if(usedNames.has(safeName)) {
+          const dot = safeName.lastIndexOf('.');
+          const stem = dot>-1 ? safeName.slice(0,dot) : safeName;
+          const ext  = dot>-1 ? safeName.slice(dot) : '';
+          let i = 2;
+          while(usedNames.has(`${stem}_${i}${ext}`)) i++;
+          safeName = `${stem}_${i}${ext}`;
+        }
+        usedNames.add(safeName);
+        const path = buildUnitDocPath(unitId, safeName);
+        const meta = await writeAttachmentFile(path, f);
+        list.push({ name: f.name || safeName, path, size: meta.size||0, mime: meta.mime||'', storedAt: meta.storedAt||Date.now() });
+      }
+      setUnitModalAttachments(list);
+      uiToast('success','تم رفع وحفظ مرفقات الوحدة ✅');
+      try{ input.value=''; }catch(e){}
+    }catch(e){
+      console.error(e);
+      uiToast('warn','تعذر رفع الملفات. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
+function openUnitModal(propId, unitId){
     const m = document.getElementById('unit-modal');
     m.classList.remove('hidden');
     // Ensure no inline display overrides (Tailwind .hidden relies on display:none)
@@ -913,6 +1029,7 @@ if(isMulti){
 
     if(u){
       ensureUnitFields(u);
+
       document.getElementById('unit-name').value = (u.unitName||u.name||unitLabel(u))||'';
       document.getElementById('unit-code').value = u.id||'';
       // عدادات الخدمات
@@ -931,6 +1048,7 @@ if(isMulti){
       document.getElementById('unit-contractNo').value = u.contractNo||'';
       document.getElementById('unit-start').value = u.start||'';
       document.getElementById('unit-end').value = u.end||'';
+      setUnitModalAttachments(u.attachments || []);
       updateUnitPreview();
     } else {
       document.getElementById('unit-form').reset();
@@ -940,6 +1058,7 @@ if(isMulti){
       document.getElementById('unit-id').value = '';
       document.getElementById('unit-name').value = '';
       document.getElementById('unit-code').value = '';
+      setUnitModalAttachments([]);
       // عدادات الخدمات (فارغة عند الإضافة)
       document.getElementById('unit-elec-meter-no').value = '';
             document.getElementById('unit-water-meter-no').value = '';
@@ -1055,6 +1174,10 @@ const newUnit = {
     // keep legacy display label synced
     ensureUnitFields(newUnit);
 
+    // attachments metadata
+    try{ newUnit.attachments = _normUnitAtts(getUnitModalAttachments()); }catch(e){ newUnit.attachments = []; }
+
+
 // إذا تم تحويل الوحدة إلى شاغرة من صفحة الوحدات، نحفظ العقد السابق في سجل العقود ثم ننظّف بيانات العقد
     if(newUnit.status === 'شاغرة'){
       if(existingUnit && unitHasLeaseData(existingUnit) && (existingUnit.status !== 'شاغرة')){
@@ -1100,8 +1223,16 @@ if(uid){
     properties.forEach(p => {
       propSelect.innerHTML += `<option value="${escHtml(p.id)}">${escHtml(p.name)}</option>`;
     });
-    document.getElementById('add-lease-form').reset();
-    applyTenantTypeUI('add-lease');
+    const f = document.getElementById('add-lease-form');
+    if(f && typeof f.reset==='function') f.reset();
+    else if(f){ try{ f.querySelectorAll('input,select,textarea').forEach(el=>{ if(el.type==='checkbox'||el.type==='radio') el.checked=false; else el.value=''; }); }catch(e){} }
+applyTenantTypeUI('add-lease');
+    // Reset contract attachment (municipality)
+    if(document.getElementById('add-lease-municipalityDocName')) document.getElementById('add-lease-municipalityDocName').value = '';
+    if(document.getElementById('add-lease-municipalityDocPath')) document.getElementById('add-lease-municipalityDocPath').value = '';
+    const l = document.getElementById('add-lease-municipalityDocLink');
+    if(l){ l.href='#'; l.classList.add('hidden'); }
+
     _resetAddLeaseUnits();
 
     // Reset schedule UI
@@ -1502,6 +1633,10 @@ function _readExistingPayPlan(){
       tenantType: normalizeText(document.getElementById('add-lease-tenantType')?.value || '', {collapseSpaces:false}),
       tradeLicenseNo: normalizeText(normalizeDigits(document.getElementById('add-lease-tradeLicense')?.value || ''), {collapseSpaces:false}),
       idNumber: normalizeText(normalizeDigits(document.getElementById('add-lease-idNumber')?.value || ''), {collapseSpaces:false}),
+          municipalityDoc: {
+        name: normalizeText((document.getElementById('add-lease-municipalityDocName')?.value || ''), {collapseSpaces:false}),
+        path: normalizeText((document.getElementById('add-lease-municipalityDocPath')?.value || ''), {collapseSpaces:false}),
+      },
     };
       if(extra.email && !isValidEmail(extra.email)){
         uiToast('warn','صيغة البريد الإلكتروني غير صحيحة. سيتم الحفظ كما هو، لكن يُفضّل تصحيحها.');
@@ -1575,7 +1710,8 @@ function _readExistingPayPlan(){
       email: extra.email || prev.email || '',
       tenantType: extra.tenantType || prev.tenantType || '',
       tradeLicenseNo: extra.tradeLicenseNo || prev.tradeLicenseNo || '',
-      idNumber: extra.idNumber || prev.idNumber || ''
+      idNumber: extra.idNumber || prev.idNumber || '',
+      docs: prev.docs || { idCard:{name:'',path:''}, tradeLicense:{name:'',path:''} }
     };
 
     // Apply the lease to each selected unit
@@ -2175,6 +2311,81 @@ function saveLeasePayment(){
     uiToast('success', 'تم حفظ الدفعة وتوزيعها على وحدات العقد.');
   }
 
+
+  function suggestLeaseMunicipalityPath(ctx){
+    // ctx: 'lease' (edit modal) or 'add' (new contract modal)
+    const isAdd = (ctx === 'add');
+    const nameId = isAdd ? 'add-lease-municipalityDocName' : 'lease-municipalityDocName';
+    const pathId = isAdd ? 'add-lease-municipalityDocPath' : 'lease-municipalityDocPath';
+    const linkId = isAdd ? 'add-lease-municipalityDocLink' : 'lease-municipalityDocLink';
+    const cnId = isAdd ? 'add-lease-contractNo' : 'lease-contractNo';
+
+    const cnRaw = document.getElementById(cnId)?.value || '';
+    const cn = normalizeText(normalizeDigits(cnRaw), {collapseSpaces:false});
+    const safe = String(cn || 'CONTRACT').replace(/[^a-z0-9_\-]/gi,'_');
+    const base = `Attachments/leases/${safe}/`;
+
+    const nameEl = document.getElementById(nameId);
+    const pathEl = document.getElementById(pathId);
+    if(nameEl && !nameEl.value) nameEl.value = 'municipality_contract.pdf';
+    if(pathEl && !pathEl.value) pathEl.value = base + 'municipality_contract.pdf';
+
+    const link = document.getElementById(linkId);
+    if(link && pathEl?.value){ link.href = '#'; link.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(pathEl.value); }catch(err){} }; link.classList.remove('hidden'); }
+  }
+
+
+  // Upload municipality contract file into Attachments folder (FS Access / OPFS)
+  async function uploadLeaseMunicipalityDoc(ctx){
+    try{
+      const isAdd = (ctx === 'add');
+      const fileId = isAdd ? 'add-lease-municipalityDocFile' : 'lease-municipalityDocFile';
+      const nameId = isAdd ? 'add-lease-municipalityDocName' : 'lease-municipalityDocName';
+      const pathId = isAdd ? 'add-lease-municipalityDocPath' : 'lease-municipalityDocPath';
+      const linkId = isAdd ? 'add-lease-municipalityDocLink' : 'lease-municipalityDocLink';
+      const cnId   = isAdd ? 'add-lease-contractNo' : 'lease-contractNo';
+
+      const fileInput = document.getElementById(fileId);
+      let file = fileInput?.files?.[0];
+      if(!file){
+        const picked = (typeof pickFilesForUpload==='function') ? await pickFilesForUpload({ multiple:false, accept:'application/pdf,image/*' }) : [];
+        file = picked?.[0];
+      }
+      if(!file){
+        uiToast('info','اختر ملف العقد أولاً.');
+        return;
+      }
+
+      const cnRaw = document.getElementById(cnId)?.value || '';
+      const cn = normalizeText(normalizeDigits(cnRaw), {collapseSpaces:false}).trim();
+      if(!cn){
+        uiToast('info','يرجى إدخال رقم العقد أولاً.');
+        return;
+      }
+
+      const path = buildLeaseDocPath(String(cn).replace(/[^a-z0-9_\-]/gi,'_'), file.name);
+      await writeAttachmentFile(path, file);
+
+      const nameEl = document.getElementById(nameId);
+      const pathEl = document.getElementById(pathId);
+      const linkEl = document.getElementById(linkId);
+      if(nameEl) nameEl.value = file.name;
+      if(pathEl) pathEl.value = path;
+      if(linkEl){
+        linkEl.href = '#';
+        linkEl.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(path); }catch(err){} };
+        linkEl.classList.remove('hidden');
+      }
+
+      uiToast('success','تم رفع وحفظ ملف العقد ✅');
+      try{ document.getElementById(fileId).value=''; }catch(e){}
+    }catch(e){
+      console.error(e);
+      uiToast('warn','تعذر رفع الملف. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
+
 function openLeaseModal(pid, uid){
     const m = document.getElementById('lease-modal');
     m.classList.remove('hidden');
@@ -2197,11 +2408,100 @@ function openLeaseModal(pid, uid){
     if(document.getElementById('lease-tenantType')) document.getElementById('lease-tenantType').value = ex.tenantType || c.tenantType || '';
     if(document.getElementById('lease-tradeLicense')) document.getElementById('lease-tradeLicense').value = ex.tradeLicenseNo || c.tradeLicenseNo || '';
     if(document.getElementById('lease-idNumber')) document.getElementById('lease-idNumber').value = ex.idNumber || c.idNumber || '';
+
+    if(document.getElementById('lease-municipalityDocName')) document.getElementById('lease-municipalityDocName').value = (ex.municipalityDoc?.name || '');
+    if(document.getElementById('lease-municipalityDocPath')) document.getElementById('lease-municipalityDocPath').value = (ex.municipalityDoc?.path || '');
+    const mdLink = document.getElementById('lease-municipalityDocLink');
+    if(mdLink){
+      const pth = (ex.municipalityDoc?.path || '').trim();
+      if(pth){ mdLink.href = '#'; mdLink.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(pth); }catch(err){} }; mdLink.classList.remove('hidden'); }
+      else { mdLink.href = '#'; mdLink.classList.add('hidden'); }
+    }
+
     applyTenantTypeUI('lease');
     if(document.getElementById('lease-tenantType')) document.getElementById('lease-tenantType').addEventListener('change', ()=>applyTenantTypeUI('lease'));
 
     document.getElementById('lease-status').value=u.status;
   }
+
+
+
+  // ================= Attachments Viewer (Lease Folder) =================
+  function openLeaseAttachmentsViewer(contractNo, groupKey){
+    try{
+      const cn = String(contractNo || '').trim();
+      const gk = String(groupKey || '').trim();
+      const key = cn || gk;
+      if(!key){
+        uiToast?.('info','رقم العقد غير متوفر.');
+        return;
+      }
+      const folder = (typeof buildLeaseFolder==='function') ? buildLeaseFolder(key) : ('Attachments/leases/' + key + '/');
+      const title = 'مرفقات العقد: ' + key;
+      if(typeof openAttachmentsViewer==='function') openAttachmentsViewer({ title, folderPath: folder });
+      else uiToast?.('warn','ميزة عرض المرفقات غير متاحة.');
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر فتح مرفقات العقد.');
+    }
+  }
+  window.openLeaseAttachmentsViewer = openLeaseAttachmentsViewer;
+
+  function openLeaseAttachmentsViewerFromModal(mode){
+    try{
+      const isAdd = String(mode||'')==='add';
+      const id = isAdd ? 'add-lease-contractNo' : 'lease-contractNo';
+      const cn = String(document.getElementById(id)?.value || '').trim();
+      openLeaseAttachmentsViewer(cn, cn);
+    }catch(e){
+      console.error(e);
+    }
+  }
+  window.openLeaseAttachmentsViewerFromModal = openLeaseAttachmentsViewerFromModal;
+
+  // ================= Attachments Viewer (Unit Folder) =================
+  function openUnitAttachmentsViewer(propId, unitId){
+    try{
+      const pid = String(propId||'').trim();
+      const uid = String(unitId||'').trim();
+      let uName = uid;
+      let key = uid;
+      try{
+        const p = (properties||[]).find(x => String(x.id)===String(pid));
+        const u = p?.units?.find(x => String(x.id)===String(uid));
+        if(u){
+          uName = u.name || u.id || uid;
+          key = u.id || uid;
+        }
+      }catch(e){}
+      if(!key){
+        uiToast?.('info','الوحدة غير محددة.');
+        return;
+      }
+      const folder = (typeof buildUnitFolder==='function') ? buildUnitFolder(key) : ('Attachments/units/' + key + '/');
+      const title = 'مرفقات الوحدة: ' + (uName || key);
+      if(typeof openAttachmentsViewer==='function') openAttachmentsViewer({ title, folderPath: folder });
+      else uiToast?.('warn','ميزة عرض المرفقات غير متاحة.');
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر فتح مرفقات الوحدة.');
+    }
+  }
+  window.openUnitAttachmentsViewer = openUnitAttachmentsViewer;
+
+  function openUnitAttachmentsViewerFromModal(){
+    try{
+      const pid = String(document.getElementById('unit-prop-id')?.value || '').trim();
+      const uid = String(document.getElementById('unit-id')?.value || '').trim();
+      const code = String(document.getElementById('unit-code')?.value || '').trim();
+      openUnitAttachmentsViewer(pid, uid || code);
+    }catch(e){
+      console.error(e);
+    }
+  }
+  window.openUnitAttachmentsViewerFromModal = openUnitAttachmentsViewerFromModal;
+
+
 
   function closeLeaseModal(){
     document.getElementById('lease-modal').classList.add('hidden');
@@ -2258,6 +2558,10 @@ function openLeaseModal(pid, uid){
       tenantType: (document.getElementById('lease-tenantType')?.value || '').trim(),
       tradeLicenseNo: (document.getElementById('lease-tradeLicense')?.value || '').trim(),
       idNumber: (document.getElementById('lease-idNumber')?.value || '').trim(),
+          municipalityDoc: {
+        name: normalizeText((document.getElementById('lease-municipalityDocName')?.value || ''), {collapseSpaces:false}),
+        path: normalizeText((document.getElementById('lease-municipalityDocPath')?.value || ''), {collapseSpaces:false}),
+      },
     };
     u.leaseExtra = Object.assign({}, u.leaseExtra || {}, extra);
 
@@ -2269,7 +2573,8 @@ function openLeaseModal(pid, uid){
       email: extra.email || prev.email || '',
       tenantType: extra.tenantType || prev.tenantType || '',
       tradeLicenseNo: extra.tradeLicenseNo || prev.tradeLicenseNo || '',
-      idNumber: extra.idNumber || prev.idNumber || ''
+      idNumber: extra.idNumber || prev.idNumber || '',
+      docs: prev.docs || { idCard:{name:'',path:''}, tradeLicense:{name:'',path:''} }
     };
 
 

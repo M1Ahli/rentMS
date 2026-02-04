@@ -164,6 +164,16 @@ const pg = paginateList(list, 'payments', 25);
 pg.items.forEach(p=>{
       const isPending = !!(p && (p.isPlanned || (String(p.status||'').includes('بانتظار')) || (p.amount===0 && p.voucherNo==='' && p.source==='schedule')));
       const tr = document.createElement('tr');
+
+      // Overdue highlighting (scheduled/pending only)
+      try{
+        const dueStr = (p && (p.dueDate || p.date)) ? String(p.dueDate || p.date) : '';
+        const d = dueStr ? new Date(dueStr) : null;
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if(isPending && d && !isNaN(d) && d < today){ tr.classList.add('row-overdue'); }
+      }catch(e){}
+
       tr.innerHTML = `
         <td class="text-sm">
           <div>${escHtml(isPending ? (p.dueDate || p.date || '') : (p.date || ''))}</div>

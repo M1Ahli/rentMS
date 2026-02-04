@@ -12,6 +12,7 @@
 <input class="border p-2 rounded" id="prop-usage" placeholder="الاستخدام"/>
 </div>
 <input class="border p-2 rounded" id="prop-location" placeholder="الموقع"/>
+
 <div class="modal-actions flex justify-end gap-3 mt-4">
 <button class="btn-ui btn-reset" onclick="closePropertyModal()" type="button">إلغاء</button>
 <button class="btn-ui btn-success">حفظ</button>
@@ -89,6 +90,23 @@
 <label class="text-xs text-gray-500 dark:text-gray-400">نهاية العقد</label>
 <input class="border p-2 rounded w-full" id="unit-end" type="date"/>
 </div>
+  <div class="md:col-span-2 border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
+    <div class="flex items-center justify-between">
+      <div class="text-xs font-bold text-gray-700 dark:text-gray-300">مرفقات الوحدة</div>
+      <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+    </div>
+
+    <div class="mt-2 flex flex-wrap gap-2 items-center">
+      <input class="border p-2 rounded w-full md:w-auto hidden" id="unit-attach-files" type="file" multiple accept="application/pdf,image/*" />
+      <button type="button" class="btn-ui btn-ui-sm btn-primary" onclick="uploadUnitModalFiles()">رفع</button>
+      <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="openUnitAttachmentsViewerFromModal()">📁 عرض الملفات</button>
+      <span class="text-[11px] text-gray-500 dark:text-gray-400">سيتم حفظ الملفات داخل Attachments/units/&lt;unit_id&gt;/</span>
+    </div>
+
+    <input id="unit-attachments-json" type="hidden" value="[]"/>
+    <div id="unit-attachments-list" class="mt-2 space-y-2"></div>
+  </div>
+
 <div class="md:col-span-2 flex justify-end gap-3 mt-4 border-t dark:border-gray-600 pt-4">
 <button class="btn-ui btn-reset" onclick="closeUnitModal()" type="button">إلغاء</button>
 <button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 shadow">حفظ التغييرات</button>
@@ -130,6 +148,29 @@
 <input class="border p-2 rounded" id="lease-rent" placeholder="القيمة" type="number"/>
 <input class="border p-2 rounded" id="lease-contractNo" placeholder="رقم العقد"/>
 </div>
+<div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">مرفق العقد الموثق (البلدية)</div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+    <input class="border p-2 rounded" id="lease-municipalityDocName" placeholder="اسم الملف (اختياري)"/>
+    <div class="flex gap-2">
+      <input class="border p-2 rounded w-full" id="lease-municipalityDocPath" placeholder="مسار/رابط الملف (مثال: Attachments/leases/&lt;contract_no&gt;/municipality_contract.pdf)"/>
+      <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="suggestLeaseMunicipalityPath('lease')">اقتراح</button>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center mt-2">
+      <input class="border p-2 rounded w-full md:w-auto hidden" id="lease-municipalityDocFile" type="file" accept="application/pdf,image/*" />
+      <button class="btn-ui btn-ui-sm btn-primary" type="button" onclick="uploadLeaseMunicipalityDoc('lease')">رفع</button>
+      <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+    </div>
+
+  </div>
+  <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+    <span>يتم حفظ الملف داخل مجلد المرفقات (وتسجيل المسار تلقائياً).</span>
+    <div class="flex items-center gap-3">
+    <a id="lease-municipalityDocLink" class="text-blue-600 dark:text-blue-400 hover:underline hidden" href="#" target="_blank" rel="noopener">فتح</a>
+    <a class="text-blue-600 dark:text-blue-400 hover:underline" href="#" onclick="openLeaseAttachmentsViewerFromModal('lease'); return false;">عرض كل الملفات</a>
+  </div>
+  </div>
+</div>
 <div class="grid grid-cols-2 gap-2">
 <div>
 <label class="text-xs">من</label>
@@ -155,138 +196,200 @@
 </div>
 
 <div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="add-lease-modal">
-<div class="modal-content modal-glass rounded-xl shadow-2xl w-full max-w-lg">
+<div class="modal-content modal-glass rounded-xl shadow-2xl w-full max-w-5xl">
 <form class="p-6 space-y-4" id="add-lease-form">
-<h3 class="font-bold text-xl mb-4 text-right">عقد جديد</h3>
-<div>
-<label class="text-xs text-gray-500 dark:text-gray-400">العقار</label>
-<select class="ui-field ui-select w-full" id="add-lease-prop"></select>
-</div>
-<div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
-<div class="flex items-center justify-between gap-3">
-<label class="text-xs text-gray-500 dark:text-gray-400">وحدات العقد (يمكن اختيار أكثر من وحدة)</label>
-<button class="btn-ui btn-secondary no-print" onclick="addLeaseUnitRow()" type="button">+ إضافة وحدة</button>
-</div>
-<div class="mt-2 overflow-auto">
-<table class="min-w-full text-sm text-right">
-<thead>
-<tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-<th class="text-right py-2 px-2 w-2/3">الوحدة</th>
-<th class="text-right py-2 px-2 w-1/3">الإيجار السنوي (AED)</th>
-<th class="py-2 px-2 w-10"></th>
-</tr>
-</thead>
-<tbody id="add-lease-units-body"></tbody>
-</table>
-</div>
-<div class="mt-2 flex items-center justify-between text-sm">
-<div class="text-gray-600 dark:text-gray-300">إجمالي الإيجار السنوي</div>
-<div class="font-extrabold text-gray-900 dark:text-white" id="add-lease-total-rent">0</div>
-</div>
-<div class="text-rose-600 text-sm mt-2" id="add-lease-units-error"></div>
-</div>
-<input class="ui-field w-full" id="add-lease-tenant" placeholder="اسم المستأجر" required=""/>
-<div class="grid grid-cols-2 gap-3">
-<input class="ui-field w-full" id="add-lease-phone" placeholder="رقم الهاتف"/>
-<input class="ui-field w-full" id="add-lease-email" placeholder="البريد الإلكتروني" type="email"/>
-</div>
-<div class="grid grid-cols-2 gap-3">
-<input class="ui-field w-full" id="add-lease-paymentsCount" min="0" placeholder="عدد الدفعات" type="number"/>
-<input class="ui-field w-full" id="add-lease-chequesCount" min="0" placeholder="عدد الشيكات" type="number"/>
-</div>
+  <h3 class="font-bold text-xl mb-2 text-right">عقد جديد</h3>
 
-<!-- Optional: Schedule payments/cheques (adds them to registers as Pending) -->
-<div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5" id="add-lease-schedule-box">
-  <div class="flex items-center justify-between gap-3">
+  <!-- Tabs -->
+  <div class="ui-tabs" id="add-lease-tabs" data-default-tab="units" aria-label="تبويبات عقد جديد">
+    <button type="button" class="ui-tab-btn active" data-tab-btn="units">🏢 الوحدات</button>
+    <button type="button" class="ui-tab-btn" data-tab-btn="tenant">👤 المستأجر</button>
+    <button type="button" class="ui-tab-btn" data-tab-btn="payments">💳 الدفعات/الشيكات</button>
+    <button type="button" class="ui-tab-btn" data-tab-btn="contract">📄 بيانات العقد</button>
+    <span class="ui-tab-hint">مفتوح افتراضياً</span>
+  </div>
+
+  <!-- Panel: Units -->
+  <div class="space-y-4" data-tab-panel="units">
     <div>
-      <div class="font-extrabold text-sm text-gray-800 dark:text-white">جدولة الدفعات / الشيكات (اختياري)</div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">سيتم إنشاء سجلات بصفة <span class="font-bold">بانتظار الدفع</span> / <span class="font-bold">بانتظار الصرف</span>.</div>
+      <label class="text-xs text-gray-500 dark:text-gray-400">العقار</label>
+      <select class="ui-field ui-select w-full" id="add-lease-prop"></select>
+    </div>
+
+    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
+      <div class="flex items-center justify-between gap-3">
+        <label class="text-xs text-gray-500 dark:text-gray-400">وحدات العقد (يمكن اختيار أكثر من وحدة)</label>
+        <button class="btn-ui btn-secondary no-print" onclick="addLeaseUnitRow()" type="button">+ إضافة وحدة</button>
+      </div>
+
+      <div class="mt-2 overflow-auto">
+        <table class="min-w-full text-sm text-right">
+          <thead>
+            <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+              <th class="text-right py-2 px-2 w-2/3">الوحدة</th>
+              <th class="text-right py-2 px-2 w-1/3">الإيجار السنوي (AED)</th>
+              <th class="py-2 px-2 w-10"></th>
+            </tr>
+          </thead>
+          <tbody id="add-lease-units-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-2 flex items-center justify-between text-sm">
+        <div class="text-gray-600 dark:text-gray-300">إجمالي الإيجار السنوي</div>
+        <div class="font-extrabold text-gray-900 dark:text-white" id="add-lease-total-rent">0</div>
+      </div>
+
+      <div class="text-rose-600 text-sm mt-2" id="add-lease-units-error"></div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
-    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-      <input type="checkbox" id="add-lease-schedule-payments" onchange="onAddLeaseScheduleChanged()" />
-      إنشاء سجل دفعات (بانتظار الدفع)
-    </label>
-    <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-      <input type="checkbox" id="add-lease-schedule-cheques" onchange="onAddLeaseScheduleChanged()" />
-      إنشاء سجل شيكات (بانتظار الصرف)
-    </label>
+  <!-- Panel: Tenant -->
+  <div class="space-y-4 hidden" data-tab-panel="tenant">
+    <input class="ui-field w-full" id="add-lease-tenant" placeholder="اسم المستأجر" required=""/>
+
+    <div class="grid grid-cols-2 gap-3">
+      <input class="ui-field w-full" id="add-lease-phone" placeholder="رقم الهاتف"/>
+      <input class="ui-field w-full" id="add-lease-email" placeholder="البريد الإلكتروني" type="email"/>
+    </div>
+
+    <div>
+      <label class="text-xs text-gray-500 dark:text-gray-400">نوع المستأجر</label>
+      <select class="ui-field ui-select w-full" id="add-lease-tenantType">
+        <option value="">نوع المستأجر...</option>
+        <option value="company">شركة</option>
+        <option value="individual">فرد</option>
+      </select>
+    </div>
+
+    <div class="hidden" id="add-lease-companyFields">
+      <input class="ui-field w-full" id="add-lease-tradeLicense" placeholder="رقم الرخصة التجارية (للشركات)"/>
+    </div>
+
+    <div class="hidden" id="add-lease-personFields">
+      <input class="ui-field w-full" id="add-lease-idNumber" placeholder="رقم الهوية (للأفراد)"/>
+    </div>
   </div>
 
-  <div class="hidden mt-3" id="add-lease-payplan-wrap">
-    <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الدفعات المجدولة</div>
-    <div class="overflow-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-          <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-            <th class="py-2 px-2 text-right w-10">#</th>
-            <th class="py-2 px-2 text-right">المبلغ (AED)</th>
-            <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
-            <th class="py-2 px-2 text-right">طريقة الدفع</th>
-          </tr>
-        </thead>
-        <tbody id="add-lease-payplan-body"></tbody>
-      </table>
+  <!-- Panel: Payments/Cheques -->
+  <div class="space-y-4 hidden" data-tab-panel="payments">
+    <div class="grid grid-cols-2 gap-3">
+      <input class="ui-field w-full" id="add-lease-paymentsCount" min="0" placeholder="عدد الدفعات" type="number"/>
+      <input class="ui-field w-full" id="add-lease-chequesCount" min="0" placeholder="عدد الشيكات" type="number"/>
     </div>
-    <div class="text-rose-600 text-sm mt-2" id="add-lease-payplan-error"></div>
+
+    <!-- Optional: Schedule payments/cheques (adds them to registers as Pending) -->
+    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5" id="add-lease-schedule-box">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <div class="font-extrabold text-sm text-gray-800 dark:text-white">جدولة الدفعات / الشيكات (اختياري)</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">سيتم إنشاء سجلات بصفة <span class="font-bold">بانتظار الدفع</span> / <span class="font-bold">بانتظار الصرف</span>.</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
+        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+          <input type="checkbox" id="add-lease-schedule-payments" onchange="onAddLeaseScheduleChanged()" />
+          إنشاء سجل دفعات (بانتظار الدفع)
+        </label>
+        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+          <input type="checkbox" id="add-lease-schedule-cheques" onchange="onAddLeaseScheduleChanged()" />
+          إنشاء سجل شيكات (بانتظار الصرف)
+        </label>
+      </div>
+
+      <div class="hidden mt-3" id="add-lease-payplan-wrap">
+        <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الدفعات المجدولة</div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                <th class="py-2 px-2 text-right w-10">#</th>
+                <th class="py-2 px-2 text-right">المبلغ (AED)</th>
+                <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
+                <th class="py-2 px-2 text-right">طريقة الدفع</th>
+              </tr>
+            </thead>
+            <tbody id="add-lease-payplan-body"></tbody>
+          </table>
+        </div>
+        <div class="text-rose-600 text-sm mt-2" id="add-lease-payplan-error"></div>
+      </div>
+
+      <div class="hidden mt-3" id="add-lease-chqplan-wrap">
+        <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الشيكات المجدولة</div>
+        <div class="overflow-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                <th class="py-2 px-2 text-right w-10">#</th>
+                <th class="py-2 px-2 text-right">رقم الشيك</th>
+                <th class="py-2 px-2 text-right">القيمة (AED)</th>
+                <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
+                <th class="py-2 px-2 text-right">البنك</th>
+                <th class="py-2 px-2 text-right">الغرض</th>
+                <th class="py-2 px-2 text-right">الوحدة</th>
+              </tr>
+            </thead>
+            <tbody id="add-lease-chqplan-body"></tbody>
+          </table>
+        </div>
+        <div class="text-rose-600 text-sm mt-2" id="add-lease-chqplan-error"></div>
+      </div>
+    </div>
   </div>
 
-  <div class="hidden mt-3" id="add-lease-chqplan-wrap">
-    <div class="text-xs font-bold text-gray-600 dark:text-gray-300 mb-2">الشيكات المجدولة</div>
-    <div class="overflow-auto">
-      <table class="min-w-full text-sm">
-        <thead>
-          <tr class="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
-            <th class="py-2 px-2 text-right w-10">#</th>
-            <th class="py-2 px-2 text-right">رقم الشيك</th>
-            <th class="py-2 px-2 text-right">القيمة (AED)</th>
-            <th class="py-2 px-2 text-right">تاريخ الاستحقاق</th>
-            <th class="py-2 px-2 text-right">البنك</th>
-            <th class="py-2 px-2 text-right">الغرض</th>
-            <th class="py-2 px-2 text-right">الوحدة</th>
-          </tr>
-        </thead>
-        <tbody id="add-lease-chqplan-body"></tbody>
-      </table>
+  <!-- Panel: Contract -->
+  <div class="space-y-4 hidden" data-tab-panel="contract">
+    <div class="grid grid-cols-2 gap-3">
+      <input class="ui-field w-full" id="add-lease-bankGuarantee" min="0" placeholder="قيمة الضمان البنكي" type="number"/>
+      <input class="ui-field w-full" id="add-lease-contractNo" placeholder="رقم العقد"/>
     </div>
-    <div class="text-rose-600 text-sm mt-2" id="add-lease-chqplan-error"></div>
+
+    <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-3 bg-white/50 dark:bg-white/5">
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">مرفق العقد الموثق (البلدية)</div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+    <input class="ui-field w-full" id="add-lease-municipalityDocName" placeholder="اسم الملف (اختياري)"/>
+    <div class="flex gap-2">
+      <input class="ui-field w-full" id="add-lease-municipalityDocPath" placeholder="مسار/رابط الملف (مثال: Attachments/leases/&lt;contract_no&gt;/municipality_contract.pdf)"/>
+      <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="suggestLeaseMunicipalityPath('add')">اقتراح</button>
+    </div>
+    <div class="flex flex-wrap gap-2 items-center mt-2">
+      <input class="ui-field w-full md:w-auto hidden" id="add-lease-municipalityDocFile" type="file" accept="application/pdf,image/*" />
+      <button class="btn-ui btn-ui-sm btn-primary" type="button" onclick="uploadLeaseMunicipalityDoc('add')">رفع</button>
+      <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+    </div>
+
+  </div>
+  <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+    <span>يتم حفظ الملف داخل مجلد المرفقات (وتسجيل المسار تلقائياً).</span>
+    <div class="flex items-center gap-3">
+    <a id="add-lease-municipalityDocLink" class="text-blue-600 dark:text-blue-400 hover:underline hidden" href="#" target="_blank" rel="noopener">فتح</a>
+    <a class="text-blue-600 dark:text-blue-400 hover:underline" href="#" onclick="openLeaseAttachmentsViewerFromModal('add'); return false;">عرض كل الملفات</a>
+  </div>
   </div>
 </div>
-<div class="grid grid-cols-2 gap-3">
-<input class="ui-field w-full" id="add-lease-bankGuarantee" min="0" placeholder="قيمة الضمان البنكي" type="number"/>
-<select class="ui-field ui-select w-full" id="add-lease-tenantType">
-<option value="">نوع المستأجر...</option>
-<option value="company">شركة</option>
-<option value="individual">فرد</option>
-</select>
-</div>
-<div class="hidden" id="add-lease-companyFields">
-<input class="ui-field w-full" id="add-lease-tradeLicense" placeholder="رقم الرخصة التجارية (للشركات)"/>
-</div>
-<div class="hidden" id="add-lease-personFields">
-<input class="ui-field w-full" id="add-lease-idNumber" placeholder="رقم الهوية (للأفراد)"/>
-</div>
-<div>
-<input class="ui-field w-full" id="add-lease-contractNo" placeholder="رقم العقد"/>
-</div>
-<div class="grid grid-cols-2 gap-3">
-<div>
-<label class="text-xs text-gray-500 dark:text-gray-400">تاريخ البدء</label>
-<input class="ui-field w-full" id="add-lease-start" type="date"/>
-</div>
-<div>
-<label class="text-xs text-gray-500 dark:text-gray-400">تاريخ الانتهاء</label>
-<input class="ui-field w-full" id="add-lease-end" type="date"/>
-</div>
-</div>
-<div class="text-rose-600 text-sm" id="add-lease-errors"></div>
-<div class="flex justify-end gap-3 pt-4">
-<button class="btn-ui btn-reset" onclick="closeAddLeaseModal()" type="button">إلغاء</button>
-<button class="btn-ui btn-success">إنشاء العقد</button>
-</div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">تاريخ البدء</label>
+        <input class="ui-field w-full" id="add-lease-start" type="date"/>
+      </div>
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">تاريخ الانتهاء</label>
+        <input class="ui-field w-full" id="add-lease-end" type="date"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-rose-600 text-sm" id="add-lease-errors"></div>
+
+  <div class="flex justify-end gap-3 pt-4 modal-footer-sticky">
+    <button class="btn-ui btn-reset" onclick="closeAddLeaseModal()" type="button">إلغاء</button>
+    <button class="btn-ui btn-success">إنشاء العقد</button>
+  </div>
 </form>
+
 </div>
 </div>
 
@@ -328,9 +431,51 @@
 </select>
 <div class="hidden" id="tenant-companyFields">
 <input class="w-full border p-2 rounded" id="tenant-tradeLicense" placeholder="رقم الرخصة التجارية (للشركات)"/>
+<div class="mt-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-white/5">
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">مرفق الرخصة التجارية</div>
+  <input class="w-full border p-2 rounded" id="tenant-tlDocName" placeholder="اسم ملف الرخصة (اختياري)"/>
+  <div class="flex gap-2 mt-2">
+    <input class="w-full border p-2 rounded" id="tenant-tlDocPath" placeholder="مسار/رابط ملف الرخصة (مثال: Attachments/tenants/&lt;tenant_key&gt;/trade_license.pdf)"/>
+    <button class="btn-ui btn-ui-sm btn-secondary" onclick="suggestTenantDocPath('trade')" type="button">اقتراح</button>
+  </div>
+  <div class="flex flex-wrap gap-2 items-center mt-2">
+    <input class="border p-2 rounded w-full md:w-auto hidden" id="tenant-tlDocFile" type="file" accept="image/*,application/pdf" />
+    <button class="btn-ui btn-ui-sm btn-primary" type="button" onclick="uploadTenantDoc('trade')">رفع</button>
+    <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+  </div>
+
+  <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+    <span>يتم حفظ الملف داخل مجلد المرفقات (وتسجيل المسار تلقائياً).</span>
+    <div class="flex items-center gap-3">
+    <a class="text-blue-600 dark:text-blue-400 hover:underline hidden" id="tenant-tlDocLink" href="#" target="_blank" rel="noopener">فتح</a>
+    <a class="text-blue-600 dark:text-blue-400 hover:underline" href="#" onclick="openTenantAttachmentsViewer(); return false;">عرض كل الملفات</a>
+  </div>
+  </div>
+</div>
 </div>
 <div class="hidden" id="tenant-personFields">
 <input class="w-full border p-2 rounded" id="tenant-idNumber" placeholder="رقم الهوية (للأفراد)"/>
+<div class="mt-2 p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-white/5">
+  <div class="text-xs font-bold text-gray-700 dark:text-gray-300 mb-2">مرفق الهوية</div>
+  <input class="w-full border p-2 rounded" id="tenant-idDocName" placeholder="اسم ملف الهوية (اختياري)"/>
+  <div class="flex gap-2 mt-2">
+    <input class="w-full border p-2 rounded" id="tenant-idDocPath" placeholder="مسار/رابط صورة الهوية (مثال: Attachments/tenants/&lt;tenant_key&gt;/id_card.jpg)"/>
+    <button class="btn-ui btn-ui-sm btn-secondary" onclick="suggestTenantDocPath('id')" type="button">اقتراح</button>
+  </div>
+  <div class="flex flex-wrap gap-2 items-center mt-2">
+    <input class="border p-2 rounded w-full md:w-auto hidden" id="tenant-idDocFile" type="file" accept="image/*,application/pdf" />
+    <button class="btn-ui btn-ui-sm btn-primary" type="button" onclick="uploadTenantDoc('id')">رفع</button>
+    <button class="btn-ui btn-ui-sm btn-secondary" type="button" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+  </div>
+
+  <div class="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+    <span>يتم حفظ الملف داخل مجلد المرفقات (وتسجيل المسار تلقائياً).</span>
+    <div class="flex items-center gap-3">
+    <a class="text-blue-600 dark:text-blue-400 hover:underline hidden" id="tenant-idDocLink" href="#" target="_blank" rel="noopener">فتح</a>
+    <a class="text-blue-600 dark:text-blue-400 hover:underline" href="#" onclick="openTenantAttachmentsViewer(); return false;">عرض كل الملفات</a>
+  </div>
+  </div>
+</div>
 </div>
 <div class="flex justify-end gap-2 pt-2">
 <button class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-gray-800" onclick="closeTenantModal()" type="button">إغلاق</button>
@@ -345,6 +490,7 @@
 <div class="modal-content modal-glass rounded-xl shadow-2xl w-full max-w-lg">
 <form class="p-6 space-y-4" id="new-cheque-form">
 <h3 class="font-bold text-lg border-b pb-2 dark:border-gray-600" id="cheque-modal-title">تسجيل شيك جديد</h3>
+<input type="hidden" id="cheque-id"/>
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">المستأجر</label>
 <select class="w-full border p-2 rounded" id="cheque-tenant-select" onchange="toggleTenantInput()">
@@ -383,6 +529,13 @@
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400 block mb-1">صورة الشيك (اختياري)</label>
 <input accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" id="cheque-image" type="file"/>
+</div>
+<div class="flex items-center justify-between gap-2 -mt-2">
+  <div class="text-[11px] text-gray-500 dark:text-gray-400">مرفقات الشيك (حفظ داخل مجلد المرفقات)</div>
+  <div class="flex items-center gap-2">
+    <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="openChequeAttachmentsViewerFromModal()" title="عرض الملفات">📁 عرض</button>
+    <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="uploadChequeAttachmentsFromModal()" title="رفع ملفات">⬆️ رفع</button>
+  </div>
 </div>
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">ملاحظات</label>
@@ -514,3 +667,268 @@
     </form>
   </div>
 </div>
+
+
+<!-- ===================== Police/Court Cases Modals ===================== -->
+
+<div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="case-modal">
+  <div class="modal-content modal-glass rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden">
+    <div class="modal-header-glass p-6 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex justify-between items-center">
+      <h3 id="case-modal-title" class="text-xl font-bold">إضافة بلاغ/دعوى</h3>
+      <button class="text-gray-400 hover:text-gray-600" onclick="closeCaseModal()" type="button">✕</button>
+    </div>
+
+    <form class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" id="case-form" onsubmit="saveCaseFromModal(event)">
+      <input id="case-id" type="hidden"/>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">النوع</label>
+        <select class="border p-2 rounded w-full" id="case-type" required>
+          <option value="بلاغ">بلاغ شرطة</option>
+          <option value="دعوى">دعوى قضائية</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">الحالة</label>
+        <select class="border p-2 rounded w-full" id="case-status" required>
+          <option value="مفتوحة">مفتوحة</option>
+          <option value="قيد المتابعة">قيد المتابعة</option>
+          <option value="مغلقة">مغلقة</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">رقم البلاغ/القضية</label>
+        <input class="border p-2 rounded w-full font-mono" id="case-number" placeholder="مثال: 12345/2026" required/>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">تاريخ البلاغ/القضية</label>
+        <input class="border p-2 rounded w-full" id="case-date" type="date" required/>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">الجهة/المحكمة</label>
+        <input class="border p-2 rounded w-full" id="case-authority" placeholder="شرطة دبي / محكمة دبي..." />
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">العقار</label>
+        <select class="border p-2 rounded w-full" id="case-property" onchange="onCasePropertyChanged()">
+          <option value="">— اختياري —</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">الوحدة</label>
+        <select class="border p-2 rounded w-full" id="case-unit" onchange="onCaseUnitChanged()">
+          <option value="">— اختياري —</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">المستأجر</label>
+        <input class="border p-2 rounded w-full" id="case-tenant" list="tenants-datalist" placeholder="اختياري"/>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">رقم العقد</label>
+        <input class="border p-2 rounded w-full font-mono" id="case-contractNo" placeholder="اختياري"/>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">عنوان مختصر</label>
+        <input class="border p-2 rounded w-full" id="case-title" placeholder="مثال: متأخرات إيجار / إخلال بالشروط..." />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">ملاحظات</label>
+        <textarea class="border p-2 rounded w-full" id="case-notes" rows="3" placeholder="تفاصيل مختصرة..."></textarea>
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">المرفقات (اختياري)</label>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input class="border p-2 rounded w-full" id="case-attach-name" placeholder="اسم الملف (اختياري)"/>
+          <input class="border p-2 rounded w-full font-mono" id="case-attach-path" placeholder="مسار/رابط (مثال: Attachments/cases/CASE_.../file.pdf)"/>
+        <div class="md:col-span-2 flex flex-wrap gap-2 items-center mt-2">
+          <input class="border p-2 rounded w-full md:w-auto hidden" id="case-attach-files" type="file" multiple accept="application/pdf,image/*" />
+          <button type="button" class="btn-ui btn-ui-sm btn-primary" onclick="uploadCaseModalFiles()">رفع</button>
+          <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+          <span class="text-[11px] text-gray-500 dark:text-gray-400">سيتم حفظ الملفات داخل مجلد المرفقات المختار.</span>
+        </div>
+
+        </div>
+
+        <div class="flex justify-end mt-2">
+          <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="addCaseModalAttachment()">+ إضافة مرفق</button>
+        </div>
+
+        <input id="case-attachments-json" type="hidden" value="[]"/>
+        <div id="case-attachments-list" class="mt-2 space-y-2"></div>
+
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          ملاحظة: عند الضغط على زر <span class="font-semibold">رفع</span> سيتم اختيار الملفات وحفظها تلقائياً داخل <span class="font-mono">Attachments</span> حسب رقم الوحدة/المستأجر/القضية.
+        </p>
+      </div>
+<div class="md:col-span-2 flex justify-end gap-3 mt-2">
+        <button class="btn-ui btn-reset" onclick="closeCaseModal()" type="button">إلغاء</button>
+        <button class="btn-ui btn-success" type="submit">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="case-update-modal">
+  <div class="modal-content modal-glass rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+    <div class="modal-header-glass p-6 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex justify-between items-center">
+      <h3 id="case-update-modal-title" class="text-xl font-bold">إضافة تطور</h3>
+      <button class="text-gray-400 hover:text-gray-600" onclick="closeCaseUpdateModal()" type="button">✕</button>
+    </div>
+
+    <form class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" id="case-update-form" onsubmit="saveCaseUpdateFromModal(event)">
+      <input id="case-update-id" type="hidden"/>
+      <input id="case-update-caseId" type="hidden"/>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">النوع</label>
+        <select class="border p-2 rounded w-full" id="case-update-type" required>
+          <option value="note">مذكرة/محضر</option>
+          <option value="fee">رسوم/غرامة</option>
+          <option value="judgement">حكم/قرار</option>
+          <option value="document">مستند</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">التاريخ</label>
+        <input class="border p-2 rounded w-full" id="case-update-date" type="date" required/>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">العنوان</label>
+        <input class="border p-2 rounded w-full" id="case-update-title" placeholder="اختياري"/>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">المبلغ (إن وجد)</label>
+        <input class="border p-2 rounded w-full" id="case-update-amount" type="number" placeholder="0"/>
+      </div>
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">المرفقات (اختياري)</label>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input class="border p-2 rounded w-full" id="case-update-attach-name" placeholder="اسم الملف (اختياري)"/>
+          <input class="border p-2 rounded w-full font-mono" id="case-update-attach-path" placeholder="مسار/رابط (مثال: Attachments/cases/CASE_.../file.pdf)"/>
+        <div class="md:col-span-2 flex flex-wrap gap-2 items-center mt-2">
+          <input class="border p-2 rounded w-full md:w-auto hidden" id="case-update-attach-files" type="file" multiple accept="application/pdf,image/*" />
+          <button type="button" class="btn-ui btn-ui-sm btn-primary" onclick="uploadCaseUpdateModalFiles()">رفع</button>
+          <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+        </div>
+
+        </div>
+
+        <div class="flex justify-end mt-2">
+          <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="addCaseUpdateModalAttachment()">+ إضافة مرفق</button>
+        </div>
+
+        <input id="case-update-attachments-json" type="hidden" value="[]"/>
+        <div id="case-update-attachments-list" class="mt-2 space-y-2"></div>
+      </div>
+<div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">تفاصيل</label>
+        <textarea class="border p-2 rounded w-full" id="case-update-note" rows="3" placeholder="اكتب التطور بالتفصيل..."></textarea>
+<div class="md:col-span-2 flex justify-end gap-3 mt-2">
+        <button class="btn-ui btn-reset" onclick="closeCaseUpdateModal()" type="button">إلغاء</button>
+        <button class="btn-ui btn-success" type="submit">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="case-event-modal">
+  <div class="modal-content modal-glass rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden">
+    <div class="modal-header-glass p-6 border-b bg-gray-50 dark:bg-gray-700 dark:border-gray-600 flex justify-between items-center">
+      <h3 id="case-event-modal-title" class="text-xl font-bold">إضافة موعد/جلسة</h3>
+      <button class="text-gray-400 hover:text-gray-600" onclick="closeCaseEventModal()" type="button">✕</button>
+    </div>
+
+    <form class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4" id="case-event-form" onsubmit="saveCaseEventFromModal(event)">
+      <input id="case-event-id" type="hidden"/>
+      <input id="case-event-caseId" type="hidden"/>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">نوع الموعد</label>
+        <select class="border p-2 rounded w-full" id="case-event-type" required>
+          <option value="police_review">مراجعة شرطة</option>
+          <option value="court_session">جلسة محكمة</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">التاريخ</label>
+        <input class="border p-2 rounded w-full" id="case-event-date" type="date" required/>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">الوقت (اختياري)</label>
+        <input class="border p-2 rounded w-full" id="case-event-time" type="time"/>
+      </div>
+
+      <div>
+        <label class="text-xs text-gray-500 dark:text-gray-400">العنوان</label>
+        <input class="border p-2 rounded w-full" id="case-event-title" placeholder="مثال: جلسة استماع / مراجعة محضر..." required/>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">التنبيه قبل</label>
+        <div class="flex flex-wrap gap-3">
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="case-rem-7" checked/> 7 أيام</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="case-rem-3" checked/> 3 أيام</label>
+          <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="case-rem-1" checked/> يوم</label>
+        </div>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="text-xs text-gray-500 dark:text-gray-400">ملاحظات</label>
+        <textarea class="border p-2 rounded w-full" id="case-event-notes" rows="2" placeholder="اختياري..."></textarea>
+<div class="md:col-span-2 flex justify-end gap-3 mt-2">
+        <button class="btn-ui btn-reset" onclick="closeCaseEventModal()" type="button">إلغاء</button>
+        <button class="btn-ui btn-success" type="submit">حفظ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- ===== Attachments Viewer (generic) ===== -->
+<div class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="attachments-viewer-modal">
+  <div class="modal-content modal-glass rounded-xl shadow-2xl w-full max-w-5xl">
+    <div class="p-4 border-b dark:border-gray-600 flex flex-wrap items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="font-extrabold text-lg text-gray-800 dark:text-white" id="attachments-viewer-title">المرفقات</div>
+        <div class="text-[11px] font-mono text-gray-500 dark:text-gray-400 break-all" id="attachments-viewer-path">Attachments/</div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="refreshAttachmentsViewer()">تحديث</button>
+        <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="chooseAttachmentsRoot()">تحديد مجلد المرفقات</button>
+        <button type="button" class="btn-ui btn-ui-sm btn-danger" onclick="closeAttachmentsViewer()">إغلاق</button>
+      </div>
+    </div>
+
+    <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="md:col-span-1">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">الملفات داخل المسار</div>
+        <div id="attachments-viewer-list" class="space-y-2 max-h-[65vh] overflow-auto"></div>
+      </div>
+      <div class="md:col-span-2">
+        <div class="text-xs text-gray-500 dark:text-gray-400 mb-2">المعاينة</div>
+        <div id="attachments-viewer-preview" class="min-h-[220px] p-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/60 dark:bg-gray-900/30"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<datalist id="tenants-datalist"></datalist>

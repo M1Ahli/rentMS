@@ -23,7 +23,7 @@
     navSlot.remove();
 
     // 2) Views (insert before modals slot so sections remain in DOM like before)
-    const pages = ["dashboard.html", "properties.html", "leases.html", "leases-archive.html", "tenants.html", "cheques.html", "payments.html", "expenses.html", "salaries.html", "receipts-history.html", "receipt.html", "reports.html", "notices.html", "settings.html"];
+    const pages = ["dashboard.html", "properties.html", "leases.html", "leases-archive.html", "tenants.html", "cheques.html", "payments.html", "expenses.html", "salaries.html", "receipts-history.html", "receipt.html", "reports.html", "notices.html", "settings.html", "police_cases.html"];
     for(const p of pages){
       const viewHTML = await loadText('./pages/' + p);
       insertBeforeSlot(modalsSlot, viewHTML);
@@ -45,9 +45,23 @@
       document.body.appendChild(s);
     });
 
+
+    // TAILWIND_OFFLINE_FALLBACK_CHECK
+    // If Tailwind CDN fails, ensure .hidden works (fallback CSS should cover it)
+    try{
+      const t = document.createElement('div');
+      t.className = 'hidden';
+      document.body.appendChild(t);
+      const ok = (getComputedStyle(t).display === 'none');
+      t.remove();
+      if(!ok){
+        console.warn('Tailwind utilities may not be loaded. Minimal fallback will keep app functional.');
+      }
+    }catch(e){}
     // 4b) Main app scripts (split into maintainable files)
     const appScripts = [
-      './assets/js/app/01_core.js',
+      
+      './assets/js/app/00_attachments_fs.js','./assets/js/app/01_core.js',
       './assets/js/app/02_notices_health.js',
       './assets/js/app/03_dashboard.js',
       './assets/js/app/04_properties.js',
@@ -59,8 +73,10 @@
       './assets/js/app/10_salaries.js',
       './assets/js/app/11_receipts.js',
       './assets/js/app/12_reports.js',
+      './assets/js/app/14_police_cases.js',
       './assets/js/app/13_settings_init_ui.js',
     ];
+
 
     for(const src of appScripts){
       await new Promise((resolve, reject)=>{
@@ -72,7 +88,17 @@
       });
     }
 
-    // Notify enhancers that dynamic HTML is ready
+    
+    // 4c) UI+ enhancements (stateful filters, autocomplete, overdue highlight, lease tabs)
+    await new Promise((resolve)=> {
+      const s = document.createElement('script');
+      s.src = './assets/js/ui_plus.js';
+      s.onload = resolve;
+      s.onerror = resolve; // keep app working even if missing
+      document.body.appendChild(s);
+    });
+
+// Notify enhancers that dynamic HTML is ready
     document.dispatchEvent(new CustomEvent('ui:components-loaded'));
 
 

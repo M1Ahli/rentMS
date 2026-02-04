@@ -7,6 +7,95 @@
   // ================= EXPENSES =================
   let _expensesAdvInited = false;
 
+  // ================= Attachments (Expenses) =================
+  function _ensureExpenseFormId(){
+    try{
+      const el = document.getElementById('expense-id');
+      if(!el) return '';
+      let v = String(el.value||'').trim();
+      if(!v){ v = 'EXP-'+Date.now(); el.value = v; }
+      return v;
+    }catch(e){ return ''; }
+  }
+
+  function openExpenseAttachmentsViewer(expenseId){
+    const id = String(expenseId||'').trim();
+    if(!id){ uiToast?.('info','اختر مصروفاً أولاً.'); return; }
+    try{
+      const folder = (typeof buildExpenseFolder==='function') ? buildExpenseFolder(id) : `Attachments/expenses/${id}/`;
+      openAttachmentsViewer({ title: `مرفقات المصروف: ${id}`, folderPath: folder });
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر فتح المرفقات. تأكد من اختيار مجلد المرفقات.');
+    }
+  }
+
+  function _attSanNameExp(name){
+    const raw = String(name||'file').trim();
+    try{
+      if(typeof safeFilename==='function') return (safeFilename(raw) || 'file').replace(/^_+/,'');
+    }catch(e){}
+    return raw.replace(/[\\/:*?\"<>|]/g,'_').slice(0,120) || 'file';
+  }
+
+  function _attUniqExp(name, used){
+    const n = String(name||'file');
+    const dot = n.lastIndexOf('.');
+    const base = (dot>0) ? n.slice(0,dot) : n;
+    const ext = (dot>0) ? n.slice(dot) : '';
+    let out = n, k=1;
+    while(used.has(out)){
+      out = `${base}(${k})${ext}`;
+      k += 1;
+    }
+    return out;
+  }
+
+  async function uploadExpenseAttachments(expenseId){
+    const id = String(expenseId||'').trim();
+    if(!id){ uiToast?.('info','اختر مصروفاً أولاً.'); return; }
+    try{
+      const files = (typeof pickFilesForUpload==='function')
+        ? await pickFilesForUpload({ multiple:true, accept:'application/pdf,image/*' })
+        : [];
+      if(!files || !files.length){ uiToast?.('info','لم يتم اختيار ملفات.'); return; }
+
+      const folder = (typeof buildExpenseFolder==='function') ? buildExpenseFolder(id) : `Attachments/expenses/${id}/`;
+      let existing = [];
+      try{ if(typeof listAttachmentFilesInFolder==='function') existing = await listAttachmentFilesInFolder(folder, {recursive:true}); }catch(e){}
+      const used = new Set((existing||[]).map(x=>String(x?.name||'').trim()).filter(Boolean));
+
+      for(const f of files){
+        let fn = _attSanNameExp(f?.name || 'file');
+        fn = _attUniqExp(fn, used);
+        used.add(fn);
+        const path = (typeof buildExpenseDocPath==='function') ? buildExpenseDocPath(id, fn) : `${folder}${fn}`;
+        await writeAttachmentFile(path, f);
+      }
+
+      uiToast?.('success','تم رفع المرفقات ✅');
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر رفع الملفات. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
+  function openExpenseAttachmentsViewerFromForm(){
+    const id = _ensureExpenseFormId();
+    return openExpenseAttachmentsViewer(id);
+  }
+
+  async function uploadExpenseAttachmentsFromForm(){
+    const id = _ensureExpenseFormId();
+    return uploadExpenseAttachments(id);
+  }
+
+  try{ window.openExpenseAttachmentsViewer = openExpenseAttachmentsViewer; }catch(e){}
+  try{ window.uploadExpenseAttachments = uploadExpenseAttachments; }catch(e){}
+  try{ window.openExpenseAttachmentsViewerFromForm = openExpenseAttachmentsViewerFromForm; }catch(e){}
+  try{ window.uploadExpenseAttachmentsFromForm = uploadExpenseAttachmentsFromForm; }catch(e){}
+
+
   function _expenseNorm(v){
     return (v===null || v===undefined) ? '' : String(v).trim().toLowerCase();
   }
@@ -243,6 +332,8 @@ const st = _expensesState();
         <td class="text-center">
           <div class="flex items-center justify-center gap-2">
             <button onclick="previewReceipt('${escHtml(e.id)}', 'expense')" class="btn-ui btn-ui-sm btn-secondary">🖨️ سند صرف</button>
+            <button type="button" onclick="openExpenseAttachmentsViewer('${escHtml(e.id)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="الملفات">📁</button>
+            <button type="button" onclick="uploadExpenseAttachments('${escHtml(e.id)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="رفع ملفات">⬆️</button>
             <button onclick="deleteExpenseById('${escHtml(e.id)}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
           </div>
         </td>
@@ -288,7 +379,7 @@ const st = _expensesState();
       if(!_expAmt || _expAmt <= 0){ uiToast('error','الرجاء إدخال مبلغ مصروف صحيح.'); return; }
 
     expenses.push({
-      id: 'EXP-'+Date.now(),
+      id: ((document.getElementById('expense-id')?.value||'').trim() || ('EXP-'+Date.now())),
       date: _expDate,
       type: _expType,
       amount: _expAmt,
@@ -299,6 +390,7 @@ const st = _expensesState();
     renderExpenses();
     renderReceiptsHistory();
     e.target.reset();
+    try{ const el = document.getElementById('expense-id'); if(el) el.value=''; }catch(e){}
     logAction(`تم تسجيل مصروف جديد من نوع: ${document.getElementById('expense-type').value}`);
   });
 

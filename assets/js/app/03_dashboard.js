@@ -211,3 +211,6 @@ const expEl = document.getElementById('expiring-leases-count');
     });
   }
 
+
+// Expose for other modules / inline handlers
+try{ window.updateDashboard = updateDashboard; }catch(e){}

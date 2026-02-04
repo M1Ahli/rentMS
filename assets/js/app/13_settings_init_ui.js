@@ -63,6 +63,9 @@
         if(data.salaries) salaries = data.salaries;
         if(data.expenses) expenses = data.expenses;
         if(data.tenantsContacts) tenantsContacts = data.tenantsContacts;
+        if(data.cases) cases = Array.isArray(data.cases) ? data.cases : [];
+        if(data.caseUpdates) caseUpdates = Array.isArray(data.caseUpdates) ? data.caseUpdates : [];
+        if(data.caseEvents) caseEvents = Array.isArray(data.caseEvents) ? data.caseEvents : [];
 
         expenses = expenses.map(e => ({
           id: e.id || 'EXP-' + Date.now() + Math.floor(Math.random()*1000),

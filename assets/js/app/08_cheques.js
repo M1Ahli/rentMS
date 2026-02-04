@@ -60,6 +60,14 @@
     modal.classList.remove('hidden');
     form.reset();
 
+    // Ensure a stable id for attachments folder even before saving
+    try{
+      const idEl = document.getElementById('cheque-id');
+      if(idEl){
+        idEl.value = chequeId ? chequeId : (idEl.value || ('CHQ-'+Date.now()));
+      }
+    }catch(e){}
+
     // Populate tenant select
     const selectEl = document.getElementById('cheque-tenant-select');
     selectEl.innerHTML = '<option value="">اختر مستأجر حالي...</option>';
@@ -118,6 +126,7 @@
   }
 function closeChequeModal(){
     const modal = document.getElementById('cheque-modal');
+    try{ const idEl = document.getElementById('cheque-id'); if(idEl) idEl.value=''; }catch(e){}
     if(modal) modal.classList.add('hidden');
     editingChequeId = null;
     pendingChequeAfterEditId = null;
@@ -181,7 +190,7 @@ const newImageFile = document.getElementById('cheque-image').files[0];
       }
     } else {
       cheques.push({
-        id: 'CHQ-'+Date.now(),
+        id: ((document.getElementById('cheque-id')?.value||'').trim() || ('CHQ-'+Date.now())),
         ...payload,
         status: 'بانتظار الصرف',
         imageUrl: newImageUrl
@@ -401,22 +410,40 @@ const st = _chequesState();
       ).join('');
 
       const tr = document.createElement('tr');
+
+      // Overdue highlighting (pending only)
+      try{
+        const d = c && c.dueDate ? new Date(String(c.dueDate)) : null;
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if(String(c.status||'').includes('بانتظار') && d && !isNaN(d) && d < today){ tr.classList.add('row-overdue'); }
+      }catch(e){}
+
       tr.innerHTML=`
         <td><span class="badge ${statusClass}">${escHtml(c.status)}</span></td>
-        <td class="font-mono">${escHtml(c.dueDate)}</td>
-        <td>${escHtml(c.tenant)}</td>
-        <td class="text-xs text-gray-600 dark:text-gray-300">${escHtml(getUnitDisplayById(c.unitId) || '-') }</td>
-        <td class="font-bold">${formatAED(c.value)}</td>
-        <td class="text-xs text-gray-500 dark:text-gray-400">${escHtml(c.bank)} - #${escHtml(c.chequeNo)}</td>
-        <td>
-          ${c.imageUrl ? `<button onclick="viewChequeImage('${escJsStr(c.imageUrl)}')" class="btn-ui btn-ui-sm btn-secondary">عرض الصورة</button>` : '-'}
+        <td class="cell-date font-mono">${escHtml(c.dueDate || '-')}</td>
+        <td class="cell-tenant">${escHtml(c.tenant || '-')}</td>
+        <td class="cell-unit">
+          <div class="unit-main">${escHtml(getUnitDisplayById(c.unitId) || '-')}</div>
         </td>
-        <td>
-          <select onchange="changeChequeStatus('${escHtml(c.id)}', this.value)" class="text-sm border p-1 rounded bg-white dark:bg-gray-800 dark:text-white">
-            ${selectOptions}
-          </select>
-          <button type="button" onclick="openChequeModal('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-secondary" title="تعديل الشيك">✏️ تعديل</button>
-          <button onclick="deleteCheque('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
+        <td class="cell-amount">${escHtml(String(formatAED(c.value)).replace(' AED','\u00A0AED'))}</td>
+        <td class="cell-bank">
+          <div class="bank-main">${escHtml(c.bank || '-')}</div>
+          <div class="bank-sub">#${escHtml(c.chequeNo || '-')}</div>
+        </td>
+        <td class="cell-image">
+          ${c.imageUrl ? `<button onclick="viewChequeImage('${escJsStr(c.imageUrl)}')" class="btn-ui btn-ui-sm btn-secondary">عرض الصورة</button>` : '<span class="text-gray-400">-</span>'}
+        </td>
+        <td class="cell-actions">
+          <div class="cell-actions-wrap">
+            <select onchange="changeChequeStatus('${escHtml(c.id)}', this.value)" class="ui-field ui-select ui-select-mini cheque-status-select" title="${escHtml(c.status || '')}">
+              ${selectOptions}
+            </select>
+            <button type="button" onclick="openChequeModal('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="تعديل الشيك">✏️</button>
+            <button type="button" onclick="openChequeAttachmentsViewer('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="الملفات">📁</button>
+            <button type="button" onclick="uploadChequeAttachments('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="رفع ملفات">⬆️</button>
+            <button onclick="deleteCheque('${escJsStr(c.id)}')" class="btn-ui btn-ui-sm btn-icon btn-danger" title="حذف">🗑️</button>
+          </div>
         </td>
       `;
       frag.appendChild(tr);
@@ -438,3 +465,89 @@ const st = _chequesState();
     logAction(`تم حذف الشيك ${id}`);
   }
 
+// Expose for other modules (filters in leases)
+try{ window.renderCheques = renderCheques; }catch(e){}
+
+
+  // ================= Attachments (Cheques) =================
+  function openChequeAttachmentsViewer(chequeId){
+    const id = String(chequeId||'').trim();
+    if(!id){ uiToast?.('info','اختر شيكاً أولاً.'); return; }
+    try{
+      const folder = (typeof buildChequeFolder==='function') ? buildChequeFolder(id) : `Attachments/cheques/${id}/`;
+      openAttachmentsViewer({ title: `مرفقات الشيك: ${id}`, folderPath: folder });
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر فتح المرفقات. تأكد من اختيار مجلد المرفقات.');
+    }
+  }
+
+  function _attSanName(name){
+    const raw = String(name||'file').trim();
+    try{
+      if(typeof safeFilename==='function') return (safeFilename(raw) || 'file').replace(/^_+/,'');
+    }catch(e){}
+    return raw.replace(/[\\/:*?\"<>|]/g,'_').slice(0,120) || 'file';
+  }
+
+  function _attUniq(name, used){
+    const n = String(name||'file');
+    const dot = n.lastIndexOf('.');
+    const base = (dot>0) ? n.slice(0,dot) : n;
+    const ext = (dot>0) ? n.slice(dot) : '';
+    let out = n, k=1;
+    while(used.has(out)){
+      out = `${base}(${k})${ext}`;
+      k += 1;
+    }
+    return out;
+  }
+
+  async function uploadChequeAttachments(chequeId){
+    const id = String(chequeId||'').trim();
+    if(!id){ uiToast?.('info','اختر شيكاً أولاً.'); return; }
+    try{
+      const files = (typeof pickFilesForUpload==='function')
+        ? await pickFilesForUpload({ multiple:true, accept:'application/pdf,image/*' })
+        : [];
+      if(!files || !files.length){
+        uiToast?.('info','لم يتم اختيار ملفات.');
+        return;
+      }
+
+      const folder = (typeof buildChequeFolder==='function') ? buildChequeFolder(id) : `Attachments/cheques/${id}/`;
+      let existing = [];
+      try{
+        if(typeof listAttachmentFilesInFolder==='function') existing = await listAttachmentFilesInFolder(folder, {recursive:true});
+      }catch(e){}
+      const used = new Set((existing||[]).map(x=>String(x?.name||'').trim()).filter(Boolean));
+
+      for(const f of files){
+        let fn = _attSanName(f?.name || 'file');
+        fn = _attUniq(fn, used);
+        used.add(fn);
+        const path = (typeof buildChequeDocPath==='function') ? buildChequeDocPath(id, fn) : `${folder}${fn}`;
+        await writeAttachmentFile(path, f);
+      }
+
+      uiToast?.('success','تم رفع المرفقات ✅');
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر رفع الملفات. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
+  function openChequeAttachmentsViewerFromModal(){
+    const id = (document.getElementById('cheque-id')?.value || '').trim();
+    return openChequeAttachmentsViewer(id);
+  }
+
+  async function uploadChequeAttachmentsFromModal(){
+    const id = (document.getElementById('cheque-id')?.value || '').trim();
+    return uploadChequeAttachments(id);
+  }
+
+  try{ window.openChequeAttachmentsViewer = openChequeAttachmentsViewer; }catch(e){}
+  try{ window.uploadChequeAttachments = uploadChequeAttachments; }catch(e){}
+  try{ window.openChequeAttachmentsViewerFromModal = openChequeAttachmentsViewerFromModal; }catch(e){}
+  try{ window.uploadChequeAttachmentsFromModal = uploadChequeAttachmentsFromModal; }catch(e){}

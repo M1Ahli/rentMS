@@ -1,0 +1,170 @@
+<section class="view hidden" id="police_cases-view">
+  <div class="flex flex-wrap items-center justify-between mb-6 gap-4">
+    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">بلاغات الشرطة والدعاوى القضائية</h2>
+    <button class="btn-ui btn-success" onclick="openCaseModal()" type="button"><span>+</span> إضافة بلاغ/دعوى</button>
+  </div>
+
+  <!-- Advanced Search & Sort: Police/Court Cases -->
+  <div class="ui-toolbar" id="cases-advanced-bar" aria-label="شريط البحث والفرز">
+    <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
+      <button class="btn-ui btn-filter" id="cases-toggle-filters" onclick="toggleCasesFiltersPanel()" type="button">🧰 الفلاتر المتقدمة</button>
+
+      <div class="ui-control ui-search-wrap rtl" aria-label="بحث البلاغات والدعاوى" role="search">
+        <span aria-hidden="true" class="ui-search-icon">🔍</span>
+        <input aria-label="بحث سريع" class="ui-field ui-ctl-input ui-search-input" id="cases-search-input"
+               oninput="onCasesAdvancedChangedDebounced()"
+               placeholder="بحث: رقم البلاغ/القضية، المستأجر، الوحدة، الجهة، الحالة..." type="text"/>
+      </div>
+    </div>
+
+    <div class="ui-toolbar-row ui-toolbar-row2" aria-label="الفرز">
+      <div class="ui-control ui-sort-pill" aria-label="فرز البلاغات والدعاوى">
+        <span class="ui-label">فرز</span>
+        <select aria-label="ترتيب الفرز" class="ui-field ui-select" id="cases-sort-by" onchange="onCasesAdvancedChanged()">
+          <option value="date">تاريخ البلاغ/القضية</option>
+          <option value="nextEvent">أقرب موعد</option>
+          <option value="status">الحالة</option>
+          <option value="type">النوع</option>
+          <option value="number">الرقم</option>
+          <option value="tenant">المستأجر</option>
+          <option value="unit">الوحدة</option>
+          <option value="property">العقار</option>
+        </select>
+        <button class="btn-ui btn-icon" data-dir="asc" id="cases-sort-dir" onclick="toggleCasesSortDir()" title="عكس ترتيب الفرز" type="button">⬆️</button>
+      </div>
+
+      <div class="ui-advbar-meta">
+        <div class="text-xs text-gray-500 dark:text-gray-400" id="cases-filter-hint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Filters Panel -->
+  <div aria-label="الفلاتر المتقدمة" class="ui-toolbar-panel hidden" id="cases-filters-panel">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-type">النوع</label>
+        <select class="ui-field ui-select" id="cases-filter-type" onchange="onCasesAdvancedChanged()">
+          <option value="">الكل</option>
+          <option value="بلاغ">بلاغ شرطة</option>
+          <option value="دعوى">دعوى قضائية</option>
+        </select>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-status">الحالة</label>
+        <select class="ui-field ui-select" id="cases-filter-status" onchange="onCasesAdvancedChanged()">
+          <option value="">الكل</option>
+          <option value="مفتوحة">مفتوحة</option>
+          <option value="قيد المتابعة">قيد المتابعة</option>
+          <option value="مغلقة">مغلقة</option>
+        </select>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-authority">الجهة/المحكمة</label>
+        <input class="ui-field" id="cases-filter-authority" oninput="onCasesAdvancedChangedDebounced()" placeholder="شرطة دبي / محكمة..." type="text"/>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-tenant">المستأجر</label>
+        <input class="ui-field" id="cases-filter-tenant" oninput="onCasesAdvancedChangedDebounced()" placeholder="اسم المستأجر..." type="text"/>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-property">العقار</label>
+        <input class="ui-field" id="cases-filter-property" oninput="onCasesAdvancedChangedDebounced()" placeholder="اسم/رمز العقار..." type="text"/>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label" for="cases-filter-unit">الوحدة</label>
+        <input class="ui-field" id="cases-filter-unit" oninput="onCasesAdvancedChangedDebounced()" placeholder="اسم/رقم الوحدة..." type="text"/>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label">التاريخ (من - إلى)</label>
+        <div class="flex gap-2">
+          <input class="ui-field w-1/2" id="cases-filter-dfrom" onchange="onCasesAdvancedChanged()" type="date"/>
+          <input class="ui-field w-1/2" id="cases-filter-dto" onchange="onCasesAdvancedChanged()" type="date"/>
+        </div>
+      </div>
+
+      <div class="ui-control ui-stack">
+        <label class="ui-label">مواعيد قادمة فقط</label>
+        <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
+          <input id="cases-filter-upcoming" onchange="onCasesAdvancedChanged()" type="checkbox"/>
+          <span>عرض القضايا ذات المواعيد القادمة</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="mt-3 flex justify-end">
+      <button class="btn-ui btn-reset" onclick="resetCasesAdvanced()" type="button">إعادة ضبط</button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap bg-white shadow-sm">
+    <table class="ui-table min-w-full text-right">
+      <thead>
+        <tr>
+          <th>النوع</th>
+          <th>الرقم</th>
+          <th>التاريخ</th>
+          <th>الجهة/المحكمة</th>
+          <th>المستأجر</th>
+          <th>العقار</th>
+          <th>الوحدة</th>
+          <th>الحالة</th>
+          <th>أقرب موعد</th>
+          <th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody id="cases-table-body"></tbody>
+    </table>
+  </div>
+
+  <div class="pager-wrap" id="cases-pager"></div>
+
+  <!-- Details Panel -->
+  <div id="cases-details-panel" class="hidden mt-5">
+    <div class="card-glass p-4 md:p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+          <div class="text-lg font-bold text-gray-800 dark:text-white" id="case-details-title">تفاصيل</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400" id="case-details-sub"></div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button class="btn-ui btn-secondary" onclick="openCaseModal(window.__currentCaseId || '')" type="button">✏️ تعديل</button>
+          
+          <button class="btn-ui btn-secondary" onclick="openCaseAttachmentsViewer(window.__currentCaseId || \'\')" type="button">📁 الملفات</button>
+<button class="btn-ui btn-secondary" onclick="openCaseUpdateModal()" type="button">➕ إضافة تطور</button>
+          <button class="btn-ui btn-secondary" onclick="openCaseEventModal()" type="button">📅 إضافة موعد</button>
+          <button class="btn-ui btn-reset" onclick="closeCaseDetails()" type="button">إغلاق</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-1">
+          <div class="text-sm font-bold text-gray-800 dark:text-white mb-2">المعلومات الأساسية</div>
+          <div id="case-details-basic" class="text-sm text-gray-700 dark:text-gray-200 space-y-1"></div>
+        </div>
+
+        <div class="lg:col-span-2">
+          <div class="flex flex-wrap gap-2 mb-3">
+            <button class="btn-ui btn-filter" id="case-tab-updates" onclick="switchCaseTab('updates')" type="button">🧾 التطورات</button>
+            <button class="btn-ui btn-filter" id="case-tab-events" onclick="switchCaseTab('events')" type="button">⏰ المواعيد والتنبيهات</button>
+          </div>
+
+          <div id="case-tab-updates-panel">
+            <div id="case-updates-list" class="space-y-2"></div>
+          </div>
+
+          <div id="case-tab-events-panel" class="hidden">
+            <div id="case-events-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

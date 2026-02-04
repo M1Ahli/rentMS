@@ -323,7 +323,11 @@ let allVouchers = [];
         <td class="px-4 py-3 text-sm font-bold text-gray-700 dark:text-gray-300 text-right align-top break-words"><div class="cell-2lines font-bold text-gray-700 dark:text-gray-300" dir="auto">${escHtml(v.party)}</div></td>
         <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-right align-top break-words"><div class="cell-2lines" title="${escHtml(v.desc)}">${escHtml(v.desc)}</div></td>
         <td class="px-4 py-3 text-center whitespace-nowrap align-top">
-          <button onclick="previewReceipt('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="btn-ui btn-ui-sm btn-secondary">عرض</button>
+          <div class="flex items-center justify-center gap-2">
+            <button onclick="previewReceipt('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="btn-ui btn-ui-sm btn-secondary">عرض</button>
+            <button type="button" onclick="openVoucherAttachmentsViewer('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="الملفات">📁</button>
+            <button type="button" onclick="uploadVoucherAttachments('${escJsStr(v.id)}', '${escJsStr(v.sourceType)}')" class="btn-ui btn-ui-sm btn-icon btn-secondary" title="رفع ملفات">⬆️</button>
+          </div>
         </td>
       `;
       frag.appendChild(tr);
@@ -364,6 +368,9 @@ let allVouchers = [];
 
   function previewReceipt(id, type='payment'){
     showView('receipt');
+
+    // Track current voucher for attachments buttons in receipt view
+    try{ window.__currentVoucher = { id: id, type: type }; }catch(e){}
 
     const titleEl    = document.getElementById('rv-title');
     const subTitleEl = document.getElementById('rv-subtitle');
@@ -432,6 +439,91 @@ let allVouchers = [];
       document.getElementById('rv-for-out').textContent = item.desc || `دفعة إيجار وحدة ${item.unit}`;
     }
   }
+
+
+
+  // ================= Attachments (Vouchers / Receipts) =================
+  function _voucherFolderPath(sourceType, voucherId){
+    const t = String(sourceType||'voucher').trim() || 'voucher';
+    const id = String(voucherId||'').trim();
+    if(typeof buildVoucherFolder==='function') return buildVoucherFolder(t, id);
+    return `Attachments/vouchers/${t}/${id}/`;
+  }
+
+  function openVoucherAttachmentsViewer(voucherId, sourceType){
+    const id = String(voucherId||'').trim();
+    const t = String(sourceType||'voucher').trim() || 'voucher';
+    if(!id){ uiToast?.('info','اختر السند أولاً.'); return; }
+    try{
+      const folder = _voucherFolderPath(t, id);
+      openAttachmentsViewer({ title: `مرفقات السند: ${id}`, folderPath: folder });
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر فتح المرفقات. تأكد من اختيار مجلد المرفقات.');
+    }
+  }
+
+  function _attSanNameV(name){
+    const raw = String(name||'file').trim();
+    try{ if(typeof safeFilename==='function') return (safeFilename(raw) || 'file').replace(/^_+/,''); }catch(e){}
+    return raw.replace(/[\/:*?"<>|]/g,'_').slice(0,120) || 'file';
+  }
+  function _attUniqV(name, used){
+    const n = String(name||'file');
+    const dot = n.lastIndexOf('.');
+    const base = (dot>0) ? n.slice(0,dot) : n;
+    const ext = (dot>0) ? n.slice(dot) : '';
+    let out = n, k=1;
+    while(used.has(out)){
+      out = `${base}(${k})${ext}`;
+      k += 1;
+    }
+    return out;
+  }
+
+  async function uploadVoucherAttachments(voucherId, sourceType){
+    const id = String(voucherId||'').trim();
+    const t = String(sourceType||'voucher').trim() || 'voucher';
+    if(!id){ uiToast?.('info','اختر السند أولاً.'); return; }
+    try{
+      const files = (typeof pickFilesForUpload==='function')
+        ? await pickFilesForUpload({ multiple:true, accept:'application/pdf,image/*' })
+        : [];
+      if(!files || !files.length){ uiToast?.('info','لم يتم اختيار ملفات.'); return; }
+
+      const folder = _voucherFolderPath(t, id);
+      let existing = [];
+      try{ if(typeof listAttachmentFilesInFolder==='function') existing = await listAttachmentFilesInFolder(folder, {recursive:true}); }catch(e){}
+      const used = new Set((existing||[]).map(x=>String(x?.name||'').trim()).filter(Boolean));
+
+      for(const f of files){
+        let fn = _attSanNameV(f?.name || 'file');
+        fn = _attUniqV(fn, used);
+        used.add(fn);
+        const path = (typeof buildVoucherDocPath==='function') ? buildVoucherDocPath(t, id, fn) : `${folder}${fn}`;
+        await writeAttachmentFile(path, f);
+      }
+
+      uiToast?.('success','تم رفع المرفقات ✅');
+    }catch(e){
+      console.error(e);
+      uiToast?.('warn','تعذر رفع الملفات. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
+  function openCurrentVoucherAttachments(){
+    const v = window.__currentVoucher || {};
+    openVoucherAttachmentsViewer(v.id, v.type);
+  }
+  async function uploadCurrentVoucherAttachments(){
+    const v = window.__currentVoucher || {};
+    return uploadVoucherAttachments(v.id, v.type);
+  }
+
+  try{ window.openVoucherAttachmentsViewer = openVoucherAttachmentsViewer; }catch(e){}
+  try{ window.uploadVoucherAttachments = uploadVoucherAttachments; }catch(e){}
+  try{ window.openCurrentVoucherAttachments = openCurrentVoucherAttachments; }catch(e){}
+  try{ window.uploadCurrentVoucherAttachments = uploadCurrentVoucherAttachments; }catch(e){}
 
   async function downloadReceiptPDF(){
       return withBusy('جارٍ إنشاء ملف PDF...', async ()=>{

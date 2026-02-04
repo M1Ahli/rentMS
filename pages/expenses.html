@@ -4,9 +4,7 @@
 <div class="ui-toolbar" id="expenses-advanced-bar" aria-label="شريط البحث والفرز">
   <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
     <button class="btn-ui btn-filter" id="expenses-toggle-filters" onclick="toggleExpensesFilters()" type="button">🧰 الفلاتر المتقدمة</button>
-    <button class="btn-ui btn-reset" id="expenses-reset-btn" onclick="resetExpensesAdvanced()" title="إعادة ضبط" type="button">↻ إعادة ضبط</button>
-
-    <div class="ui-control ui-search-wrap rtl" aria-label="بحث المصروفات">
+<div class="ui-control ui-search-wrap rtl" aria-label="بحث المصروفات">
       <span aria-hidden="true" class="ui-search-icon">🔍</span>
       <input class="ui-field ui-ctl-input ui-search-input" id="expenses-search-input" oninput="onExpensesAdvancedChangedDebounced()" placeholder="بحث: نوع المصروف / البيان / التاريخ / المبلغ ..." type="text"/>
     </div>
@@ -68,6 +66,7 @@
 <div class="grid md:grid-cols-3 gap-6">
 <form class="bg-white p-6 rounded-xl shadow-sm space-y-4 h-fit" id="new-expense-form">
 <h3 class="font-bold text-gray-700 dark:text-gray-200">إضافة مصروف جديد</h3>
+<input type="hidden" id="expense-id"/>
 <input class="w-full border p-2 rounded" id="expense-date" required="" type="date"/>
 <div>
 <label class="text-xs text-gray-500 dark:text-gray-400">نوع المصروف</label>
@@ -82,6 +81,13 @@
 </div>
 <input class="w-full border p-2 rounded" id="expense-amount" placeholder="المبلغ (AED)" required="" type="number"/>
 <textarea class="w-full border p-2 rounded h-24" id="expense-details" placeholder="تفاصيل المصروف..." required=""></textarea>
+<div class="flex items-center justify-between gap-2 -mt-2">
+  <div class="text-[11px] text-gray-500 dark:text-gray-400">مرفقات المصروف (حفظ داخل مجلد المرفقات)</div>
+  <div class="flex items-center gap-2">
+    <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="openExpenseAttachmentsViewerFromForm()" title="عرض الملفات">📁 عرض</button>
+    <button type="button" class="btn-ui btn-ui-sm btn-secondary" onclick="uploadExpenseAttachmentsFromForm()" title="رفع ملفات">⬆️ رفع</button>
+  </div>
+</div>
 <button class="btn-ui btn-danger">تسجيل المصروف</button>
 </form>
 <div class="md:col-span-2 table-wrap bg-white shadow-sm rounded-xl">
@@ -91,7 +97,7 @@
 <col style="width:140px"/>
 <col style="width:150px"/>
 <col/>
-<col style="width:170px"/>
+<col style="width:230px"/>
 </colgroup>
 <thead>
 <tr>
@@ -99,7 +105,7 @@
 <th>النوع</th>
 <th>المبلغ</th>
 <th>البيان</th>
-<th class="text-center">السند / تحكم</th>
+<th class="text-center">السند / ملفات</th>
 </tr>
 </thead>
 <tbody id="expenses-table-body"></tbody>

@@ -10,7 +10,7 @@
     <div class="ui-toolbar-row ui-toolbar-row1" aria-label="بحث وإجراءات">
       <div class="ui-control ui-sort-pill" aria-label="فلتر الحالة">
         <span class="ui-label">الحالة</span>
-        <select class="ui-field ui-select" id="leases-archive-status-filter" aria-label="فلتر حالة العقد">
+        <select class="ui-field ui-select" id="leases-archive-status-filter" aria-label="فلتر حالة العقد" onchange="renderLeasesArchivePage()">
           <option value="all">الكل</option>
           <option value="منتهية">منتهية (بعد إخلاء/إلغاء)</option>
           <option value="ملغاة">ملغاة</option>
@@ -21,7 +21,7 @@
 
       <div class="ui-control ui-sort-pill" aria-label="فلتر سبب الأرشفة">
         <span class="ui-label">سبب الأرشفة</span>
-        <select class="ui-field ui-select" id="leases-archive-reason-filter" aria-label="فلتر سبب الأرشفة">
+        <select class="ui-field ui-select" id="leases-archive-reason-filter" aria-label="فلتر سبب الأرشفة" onchange="renderLeasesArchivePage()">
           <option value="all">الكل</option>
           <option value="renew">تجديد</option>
           <option value="cancel">إلغاء</option>
@@ -31,27 +31,33 @@
 
       <div class="ui-control ui-search-wrap rtl" aria-label="بحث في أرشيف العقود" role="search">
         <span aria-hidden="true" class="ui-search-icon">🔍</span>
-        <input class="ui-field ui-ctl-input ui-search-input" id="leases-archive-search" type="text" placeholder="بحث: المستأجر / رقم العقد / الوحدة..." aria-label="بحث في أرشيف العقود" />
-      </div>
+        <input class="ui-field ui-ctl-input ui-search-input" id="leases-archive-search" type="text" placeholder="بحث: المستأجر / رقم العقد / الوحدة..." aria-label="بحث في أرشيف العقود" oninput="renderLeasesArchivePage()">
+      </div>      <button class="btn-ui btn-filter" id="leases-archive-toggle-filters" type="button" onclick="toggleLeasesArchiveFiltersPanel()">🧰 الفلاتر المتقدمة</button>
 
-      <button class="btn-ui btn-reset" id="leases-archive-reset" type="button" onclick="resetLeasesArchiveFilters()">↻ إعادة ضبط</button>
 
-      <div class="ui-advbar-meta">
+<div class="ui-advbar-meta">
         <span class="ui-hint" id="leases-archive-counts"></span>
       </div>
     </div>
 
-    <div class="ui-toolbar-row ui-toolbar-row2" aria-label="فلترة حسب تاريخ الأرشفة">
-      <div class="ui-control ui-sort-pill" aria-label="من تاريخ">
-        <span class="ui-label">من تاريخ</span>
-        <input class="ui-field ui-input" id="leases-archive-date-from" type="date" aria-label="من تاريخ الأرشفة" />
-      </div>
-      <div class="ui-control ui-sort-pill" aria-label="إلى تاريخ">
-        <span class="ui-label">إلى تاريخ</span>
-        <input class="ui-field ui-input" id="leases-archive-date-to" type="date" aria-label="إلى تاريخ الأرشفة" />
-      </div>
-      <div class="text-xs text-gray-500 dark:text-gray-400">* التاريخ يعتمد على تاريخ الأرشفة (ليس تاريخ نهاية العقد)</div>
+    
+
+  <div class="ui-toolbar-panel hidden" id="leases-archive-filters-panel" aria-label="الفلاتر المتقدمة لأرشيف العقود">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+<div class="ui-control ui-sort-pill" aria-label="من تاريخ">
+    <span class="ui-label">من تاريخ</span>
+    <input class="ui-field ui-input" id="leases-archive-date-from" type="date" aria-label="من تاريخ الأرشفة" onchange="renderLeasesArchivePage()">
+  </div>
+  <div class="ui-control ui-sort-pill" aria-label="إلى تاريخ">
+    <span class="ui-label">إلى تاريخ</span>
+    <input class="ui-field ui-input" id="leases-archive-date-to" type="date" aria-label="إلى تاريخ الأرشفة" onchange="renderLeasesArchivePage()">
+  </div>
+  <div class="text-xs text-gray-500 dark:text-gray-400">* التاريخ يعتمد على تاريخ الأرشفة (ليس تاريخ نهاية العقد)</div>
     </div>
+    <div class="flex justify-end mt-3">
+      <button class="btn-ui btn-reset" id="leases-archive-reset" type="button" onclick="resetLeasesArchiveFilters()">↻ إعادة ضبط</button>
+    </div>
+  </div>
   </div>
 
   <div class="table-wrap bg-white shadow-sm">

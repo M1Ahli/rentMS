@@ -24,6 +24,12 @@
         map[key].tenantType = c.tenantType || map[key].tenantType || '';
         map[key].tradeLicenseNo = c.tradeLicenseNo || map[key].tradeLicenseNo || '';
         map[key].idNumber = c.idNumber || map[key].idNumber || '';
+        // attachments (paths only)
+        const docs = c.docs || {};
+        map[key].docs = {
+          idCard: Object.assign({name:'', path:''}, docs.idCard || {}),
+          tradeLicense: Object.assign({name:'', path:''}, docs.tradeLicense || {})
+        };
         // Display label in tenants table
         if(map[key].tenantType === 'شركة' && map[key].tradeLicenseNo){
           map[key].idLabel = `🏢 رخصة: ${map[key].tradeLicenseNo}`;
@@ -175,7 +181,17 @@ const search = (document.getElementById('tenants-search').value||'').toLowerCase
           📧 ${escHtml(t.email||'--')}
         </td>
         <td class="text-xs text-gray-600 dark:text-gray-300">
-          ${escHtml(t.idLabel||'--')}
+          <div>${escHtml(t.idLabel||'--')}</div>
+          <div class="flex items-center justify-end gap-2 mt-1">
+            ${(() => {
+              const idp = (t.docs && t.docs.idCard && t.docs.idCard.path) ? t.docs.idCard.path : '';
+              const tlp = (t.docs && t.docs.tradeLicense && t.docs.tradeLicense.path) ? t.docs.tradeLicense.path : '';
+              const a1 = idp ? `<a class="hover:underline" href="#" data-path="${escHtml(idp)}" onclick="openAttachmentByPath(this.dataset.path); return false;" title="صورة الهوية">🪪</a>` : '';
+              const a2 = tlp ? `<a class="hover:underline" href="#" data-path="${escHtml(tlp)}" onclick="openAttachmentByPath(this.dataset.path); return false;" title="ملف الرخصة التجارية">📄</a>` : '';
+              const a3 = `<a class="hover:underline" href="#" data-tenant-key="${escHtml(t.key)}" onclick="openTenantAttachmentsViewer(this.dataset.tenantKey); return false;" title="عرض جميع مرفقات المستأجر">📁</a>`;
+              return (a1 + a2 + a3) || '<span class="text-gray-400">—</span>';
+            })()}
+          </div>
         </td>
         <td class="text-xs text-gray-500 dark:text-gray-400">${escHtml(t.units.join(', '))}</td>
         <td class="font-mono">${formatAED(t.rent)}</td>
@@ -190,6 +206,12 @@ const search = (document.getElementById('tenants-search').value||'').toLowerCase
       btn.className = 'btn-ui btn-ui-sm btn-secondary';
       btn.addEventListener('click', ()=> openTenantModal(t.key, t.name));
       td.appendChild(btn);
+
+      const btnFiles = document.createElement('button');
+      btnFiles.textContent = 'ملفات';
+      btnFiles.className = 'btn-ui btn-ui-sm btn-secondary';
+      btnFiles.addEventListener('click', ()=> openTenantAttachmentsViewer(t.key, t.name));
+      td.appendChild(btnFiles);
 
       frag.appendChild(tr);
     });
@@ -240,6 +262,38 @@ const search = (document.getElementById('tenants-search').value||'').toLowerCase
       tsd.textContent = (d==='asc') ? '⬆️' : '⬇️';
     }
   }
+
+
+  // ================= Attachments Viewer (Tenant Folder) =================
+  function openTenantAttachmentsViewer(tenantKeyArg, tenantName){
+    try{
+      // Called either from tenants table (tenantKey provided) or from tenant modal (fallback to currentTenantKey)
+      const key = String(tenantKeyArg || (typeof currentTenantKey!=='undefined' ? currentTenantKey : '') || '').trim();
+      let useKey = key;
+      // If still missing, try infer from tenant name using existing tenantKey() helper
+      if(!useKey){
+        const nm = String(document.getElementById('tenant-name')?.value || '').trim();
+        useKey = (typeof window.tenantKey==='function') ? window.tenantKey(nm) : '';
+      }
+      if(!useKey){
+        uiToast('info','حدد مستأجر أولاً.');
+        return;
+      }
+      const folder = (typeof buildTenantFolder==='function') ? buildTenantFolder(useKey) : ('Attachments/tenants/' + useKey + '/');
+      const knownName = (typeof getTenantByKey==='function') ? (getTenantByKey(useKey)?.name || '') : '';
+      const title = 'مرفقات المستأجر: ' + String(tenantName || knownName || useKey);
+      if(typeof openAttachmentsViewer==='function'){
+        // Prevent unhandled promise rejections from bubbling to the global scope
+        const p = openAttachmentsViewer({ title, folderPath: folder });
+        if(p && typeof p.catch === 'function') p.catch(()=>{});
+      }
+      else uiToast('warn','ميزة عرض المرفقات غير متاحة.');
+    }catch(e){
+      console.error(e);
+      uiToast('warn','تعذر فتح المرفقات.');
+    }
+  }
+  window.openTenantAttachmentsViewer = openTenantAttachmentsViewer;
   // ===== Properties - Unit Filters (Vacant/Rented + End Date) =====
   function initPropertiesUnitFilters(){
     const statusEl = document.getElementById('unit-status-filter');
@@ -437,7 +491,17 @@ const search = (document.getElementById('tenants-search').value||'').toLowerCase
       email: normalizeEmail(emailEl?.value || ''),
       tenantType: document.getElementById('tenant-type')?.value || (tenantsContacts[key]?.tenantType || ''),
       tradeLicenseNo: normalizeText(normalizeDigits(document.getElementById('tenant-tradeLicense')?.value || (tenantsContacts[key]?.tradeLicenseNo || '')), {collapseSpaces:false}),
-      idNumber: normalizeText(normalizeDigits(document.getElementById('tenant-idNumber')?.value || (tenantsContacts[key]?.idNumber || '')), {collapseSpaces:false})
+      idNumber: normalizeText(normalizeDigits(document.getElementById('tenant-idNumber')?.value || (tenantsContacts[key]?.idNumber || '')), {collapseSpaces:false}),
+      docs: {
+        idCard: {
+          name: normalizeText((document.getElementById('tenant-idDocName')?.value || (tenantsContacts[key]?.docs?.idCard?.name || '')), {collapseSpaces:false}),
+          path: normalizeText((document.getElementById('tenant-idDocPath')?.value || (tenantsContacts[key]?.docs?.idCard?.path || '')), {collapseSpaces:false}),
+        },
+        tradeLicense: {
+          name: normalizeText((document.getElementById('tenant-tlDocName')?.value || (tenantsContacts[key]?.docs?.tradeLicense?.name || '')), {collapseSpaces:false}),
+          path: normalizeText((document.getElementById('tenant-tlDocPath')?.value || (tenantsContacts[key]?.docs?.tradeLicense?.path || '')), {collapseSpaces:false}),
+        }
+      }
     };
 
     
@@ -470,7 +534,7 @@ saveToLocal();
     modal.dataset.bound = '1';
 
     // autosave on input (phone/email)
-    ['tenant-phone','tenant-email','tenant-type','tenant-tradeLicense','tenant-idNumber'].forEach(id=>{
+    ['tenant-phone','tenant-email','tenant-type','tenant-tradeLicense','tenant-idNumber','tenant-idDocName','tenant-idDocPath','tenant-tlDocName','tenant-tlDocPath'].forEach(id=>{
       const el = document.getElementById(id);
       if(el){
         el.addEventListener('input', scheduleTenantAutosave);
@@ -503,6 +567,93 @@ saveToLocal();
     });
   }
 
+
+  function suggestTenantDocPath(kind){
+    // kind: 'id' or 'trade'
+    const nameEl = document.getElementById('tenant-name');
+    const displayName = (nameEl?.value || '').trim();
+    const key = currentTenantKey || tenantKey(displayName) || 'tenant';
+    const safeKey = String(key).replace(/[^a-z0-9_\-]/gi,'_');
+    const base = `Attachments/tenants/${safeKey}/`;
+
+    if(kind === 'id'){
+      const pathEl = document.getElementById('tenant-idDocPath');
+      const nameEl2 = document.getElementById('tenant-idDocName');
+      if(nameEl2 && !nameEl2.value) nameEl2.value = 'id_card.jpg';
+      if(pathEl && !pathEl.value) pathEl.value = base + 'id_card.jpg';
+      const link = document.getElementById('tenant-idDocLink');
+      if(link && pathEl?.value){ link.href = '#'; link.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(pathEl.value); }catch(err){} }; link.classList.remove('hidden'); }
+    } else {
+      const pathEl = document.getElementById('tenant-tlDocPath');
+      const nameEl2 = document.getElementById('tenant-tlDocName');
+      if(nameEl2 && !nameEl2.value) nameEl2.value = 'trade_license.pdf';
+      if(pathEl && !pathEl.value) pathEl.value = base + 'trade_license.pdf';
+      const link = document.getElementById('tenant-tlDocLink');
+      if(link && pathEl?.value){ link.href = '#'; link.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(pathEl.value); }catch(err){} }; link.classList.remove('hidden'); }
+    }
+    scheduleTenantAutosave();
+  }
+
+
+  // Upload tenant documents directly into the chosen Attachments folder
+  async function uploadTenantDoc(kind){
+    // kind: 'id' or 'trade'
+    try{
+      const key = persistTenantContact({silent:true}); // ensure key exists
+      if(!key){
+        uiToast('info','يرجى إدخال اسم المستأجر أولاً.');
+        return;
+      }
+      const safeKey = String(key).replace(/[^a-z0-9_\-]/gi,'_');
+      const inputId = (kind==='id') ? 'tenant-idDocFile' : 'tenant-tlDocFile';
+      const fileInput = document.getElementById(inputId);
+      let file = fileInput?.files?.[0];
+      if(!file){
+        const picked = (typeof pickFilesForUpload==='function') ? await pickFilesForUpload({ multiple:false, accept:'image/*,application/pdf' }) : [];
+        file = picked?.[0];
+      }
+      if(!file){
+        uiToast('info','اختر ملفاً أولاً.');
+        return;
+      }
+
+      // Build path
+      const path = buildTenantDocPath(safeKey, kind, file.name);
+      await writeAttachmentFile(path, file);
+
+      if(kind==='id'){
+        const nameEl = document.getElementById('tenant-idDocName');
+        const pathEl = document.getElementById('tenant-idDocPath');
+        const link = document.getElementById('tenant-idDocLink');
+        if(nameEl) nameEl.value = file.name;
+        if(pathEl) pathEl.value = path;
+        if(link){
+          link.href = '#';
+          link.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(path); }catch(err){} };
+          link.classList.remove('hidden');
+        }
+      } else {
+        const nameEl = document.getElementById('tenant-tlDocName');
+        const pathEl = document.getElementById('tenant-tlDocPath');
+        const link = document.getElementById('tenant-tlDocLink');
+        if(nameEl) nameEl.value = file.name;
+        if(pathEl) pathEl.value = path;
+        if(link){
+          link.href = '#';
+          link.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(path); }catch(err){} };
+          link.classList.remove('hidden');
+        }
+      }
+
+      scheduleTenantAutosave();
+      uiToast('success','تم رفع وحفظ المرفق ✅');
+      try{ fileInput.value=''; }catch(e){}
+    }catch(e){
+      console.error(e);
+      uiToast('warn','تعذر رفع الملف. تأكد من تحديد مجلد المرفقات ومنح الصلاحية.');
+    }
+  }
+
 function openTenantModal(key='', displayName=''){
     const modal = document.getElementById('tenant-modal');
     modal.classList.remove('hidden');
@@ -526,6 +677,19 @@ function openTenantModal(key='', displayName=''){
     if(tradeInput) tradeInput.value = '';
     if(idInput) idInput.value = '';
 
+    const idDocName = document.getElementById('tenant-idDocName');
+    const idDocPath = document.getElementById('tenant-idDocPath');
+    const tlDocName = document.getElementById('tenant-tlDocName');
+    const tlDocPath = document.getElementById('tenant-tlDocPath');
+    const idDocLink = document.getElementById('tenant-idDocLink');
+    const tlDocLink = document.getElementById('tenant-tlDocLink');
+    if(idDocName) idDocName.value = '';
+    if(idDocPath) idDocPath.value = '';
+    if(tlDocName) tlDocName.value = '';
+    if(tlDocPath) tlDocPath.value = '';
+    if(idDocLink){ idDocLink.href = '#'; idDocLink.classList.add('hidden'); }
+    if(tlDocLink){ tlDocLink.href = '#'; tlDocLink.classList.add('hidden'); }
+
 
     const c = tenantsContacts[currentTenantKey];
     if(c){
@@ -534,6 +698,21 @@ function openTenantModal(key='', displayName=''){
       if(typeSel) typeSel.value = c.tenantType || '';
       if(tradeInput) tradeInput.value = c.tradeLicenseNo || '';
       if(idInput) idInput.value = c.idNumber || '';
+      const docs = c.docs || {};
+      if(idDocName) idDocName.value = (docs.idCard?.name || '');
+      if(idDocPath) idDocPath.value = (docs.idCard?.path || '');
+      if(tlDocName) tlDocName.value = (docs.tradeLicense?.name || '');
+      if(tlDocPath) tlDocPath.value = (docs.tradeLicense?.path || '');
+      if(idDocLink && (docs.idCard?.path||'')){
+        idDocLink.href = '#';
+        idDocLink.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(docs.idCard.path); }catch(err){} };
+        idDocLink.classList.remove('hidden');
+      }
+      if(tlDocLink && (docs.tradeLicense?.path||'')){
+        tlDocLink.href = '#';
+        tlDocLink.onclick = (e)=>{ try{ e.preventDefault(); openAttachmentByPath(docs.tradeLicense.path); }catch(err){} };
+        tlDocLink.classList.remove('hidden');
+      }
       // keep stored preferred name if present
       if(c.name && !displayName) nameInput.value = c.name;
     }
